@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apresentação de BI: Mercado em Números</title>
+    <!-- Carregamento do Tailwind CSS para estilo moderno e responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Fonte global com mínimo de 28px para acessibilidade, conforme solicitado */
+        body { font-family: 'Inter', sans-serif; font-size: 28px; background-color: #f8f8f8; }
+        
+        /* Estilo base para os slides */
+        .slide {
+            height: 100vh;
+            width: 100vw;
+            display: none; /* Oculta todos por padrão */
+            position: relative;
+            padding: 4rem 6rem;
+            transition: opacity 0.5s ease-in-out;
+            background-color: #ffffff;
+        }
+        
+        /* Estilo para títulos grandes */
+        .slide h1 {
+            font-size: 4rem; /* Maior que 28px */
+            font-weight: 700;
+            color: #1f2937; /* Cinza escuro */
+            margin-bottom: 1rem;
+        }
+        
+        .slide h2 {
+            font-size: 2.5rem; /* Maior que 28px */
+            font-weight: 600;
+            color: #0d9488; /* Ciano/Teal para destaque BI */
+            margin-bottom: 0.75rem; 
+            border-bottom: 3px solid #f97316; /* Laranja de destaque */
+            display: inline-block;
+            padding-bottom: 0.5rem;
+        }
+
+        /* Estilo base para o card dinâmico (tópico visível) */
+        .dynamic-card {
+            cursor: pointer;
+            border-radius: 1.5rem; /* Arredondado moderno */
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+            min-height: 200px;
+        }
+
+        /* Estilo do conteúdo oculto */
+        .hidden-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out, padding 0.5s ease-out;
+            padding-top: 0;
+            font-size: 24px; /* Ligeiramente menor que o título, mas ainda grande */
+            line-height: 1.4;
+            color: #4b5563;
+        }
+        
+        /* Estilo específico para o bloco de código fora do card (visível) */
+        .code-block {
+            display: block;
+            background-color: #1f2937; /* Fundo escuro para código */
+            color: #f8f8f8;
+            padding: 1.5rem; /* Aumentado o padding */
+            border-radius: 0.75rem; /* Aumentado o raio */
+            font-size: 18px; /* AUMENTADO para melhor legibilidade no projetor */
+            white-space: pre; /* Garante que a identação seja respeitada */
+            overflow-x: auto;
+            line-height: 1.4; /* Aumentado o espaçamento entre linhas */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            height: 100%; /* Ocupa a altura total do container */
+        }
+
+        .dynamic-card.active .hidden-content {
+            max-height: 500px; /* Suficientemente grande para revelar o conteúdo */
+            padding-top: 1.5rem;
+        }
+
+        /* Estilo para ícones */
+        .icon-large {
+            font-size: 3.5rem;
+            color: #f97316; /* Laranja de destaque */
+        }
+
+        /* Estilo para o Footer/Identificação */
+        .slide-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem 6rem;
+            background-color: #1f2937;
+            color: #9ca3af;
+            font-size: 22px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Classes para simular logos (não usaremos URLs reais de logo) */
+        .tech-logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .logo-python { background-color: #3776ab; color: white; }
+        .logo-streamlit { background-color: #ff4b4b; color: white; }
+        .logo-opencv { background-color: #555555; color: white; }
+        .logo-pandas { background-color: #150458; color: white; }
+        .logo-webrtc { background-color: #a0c334; color: white; }
+
+        /* Botões de navegação */
+        .nav-button {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #f97316;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.5);
+            transition: background-color 0.3s;
+            z-index: 100;
+        }
+        .nav-button:hover {
+            background-color: #ea580c;
+        }
+        #prev-btn { left: 1rem; }
+        #next-btn { right: 1rem; }
+    </style>
+    <script>
+        // Carrega o Font Awesome para ícones
+        document.addEventListener('DOMContentLoaded', function() {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css';
+            document.head.appendChild(link);
+        });
+    </script>
+</head>
+<body class="overflow-hidden">
+
+    <!-- Botões de Navegação -->
+    <button id="prev-btn" class="nav-button"><i class="fas fa-chevron-left"></i></button>
+    <button id="next-btn" class="nav-button"><i class="fas fa-chevron-right"></i></button>
+
+    <!-- SLIDES CONTAINER -->
+    <div id="presentation-container">
+        
+        <!-- ========================================================================= -->
+        <!-- 1. SLIDE: TÍTULO E IDENTIFICAÇÃO -->
+        <!-- ========================================================================= -->
+        <div id="slide-1" class="slide flex flex-col justify-center items-center text-center">
+            <h1 class="text-7xl tracking-tighter text-[#1f2937]">MERCADO EM NÚMEROS</h1>
+            <p class="text-5xl font-light text-[#4b5563] mt-2 leading-tight">
+                SEU PRIMEIRO DASHBOARD PROFISSIONAL:<br>
+                <span class="font-semibold text-[#f97316]">FASE 1 - LEITOR DE QR CODE</span>
+            </p>
+
+            <div class="slide-footer text-left justify-start space-x-12">
+                <div>
+                    <span class="font-bold text-white">Curso:</span> Inteligência Artificial
+                </div>
+                <div>
+                    <span class="font-bold text-white">Componente:</span> Business Intelligence
+                </div>
+                <div>
+                    <span class="font-bold text-white">Docente:</span> Ms. Ujeverson Tavares Sampaio
+                </div>
+                <div>
+                    <span class="font-bold text-white">Turma/Data:</span> 2º Período | 05/05/2025
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- 2. SLIDE: CONTEXTO E O PROBLEMA DE BI (Resumo Visual) -->
+        <!-- ========================================================================= -->
+        <div id="slide-2" class="slide">
+            <h2>CONTEXTUALIZAÇÃO</h2>
+            
+            <div class="grid grid-cols-3 gap-8 mt-12">
+                
+                <!-- Card 1: OPORTUNIDADE DE VAREJO -->
+                <div class="dynamic-card bg-gray-50 hover:bg-gray-100 p-8 flex flex-col" onclick="toggleCard(this)">
+                    <i class="fas fa-chart-line icon-large mb-4"></i>
+                    <h3 class="font-bold text-3xl text-gray-800">OPORTUNIDADE DE VAREJO</h3>
+                    <div class="hidden-content pt-4 text-left">
+                        <p>Compreender o comportamento de compra, identificar produtos mais vendidos e reconhecer horários de pico para novas oportunidades de negócio.</p>
+                    </div>
+                </div>
+
+                <!-- Card 2: FUNÇÃO DO BI -->
+                <div class="dynamic-card bg-gray-50 hover:bg-gray-100 p-8 flex flex-col" onclick="toggleCard(this)">
+                    <i class="fas fa-lightbulb icon-large mb-4"></i>
+                    <h3 class="font-bold text-3xl text-gray-800">FUNÇÃO DO BI</h3>
+                    <div class="hidden-content pt-4 text-left">
+                        <p>Transformar dados brutos em informações estratégicas e acionáveis para apoiar a tomada de decisão gerencial.</p>
+                    </div>
+                </div>
+
+                <!-- Card 3: O GARGALO INICIAL -->
+                <div class="dynamic-card bg-gray-50 hover:bg-gray-100 p-8 flex flex-col" onclick="toggleCard(this)">
+                    <i class="fas fa-qrcode icon-large mb-4"></i>
+                    <h3 class="font-bold text-3xl text-gray-800">O GARGALO INICIAL</h3>
+                    <div class="hidden-content pt-4 text-left">
+                        <p>A Chave de Acesso é o identificador único. A captura automatizada é essencial para garantir a confiabilidade e evitar duplicidades.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="slide-footer">Slide 2 / 8</div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- 3. NOVO SLIDE: EXTRAÇÃO DA CHAVE (Replicando o formato da imagem) -->
+        <!-- ========================================================================= -->
+        <div id="slide-3" class="slide flex-col">
+            <!-- Novo layout: Título na esquerda, alinhado com o código/card -->
+            <div class="flex h-full w-full">
+                <!-- Coluna da Esquerda: TÍTULO VERTICAL - ALTERADO AQUI -->
+                <div class="w-1/4 flex flex-col justify-center items-start pr-8">
+                    <h2 class="text-6xl font-extrabold text-[#0d9488] mb-4 leading-tight border-none p-0">
+                        LÓGICA CORE: 1.<br>
+                        <span class="text-[#f97316] font-normal">CAPTURA E EXTRAÇÃO</span>
+                    </h2>
+                </div>
+
+                <!-- Coluna do Meio: CÓDIGO -->
+                <div class="w-1/2 flex items-center pr-5 py-4">
+                    <code class="code-block text-left h-full w-full">
+def extrair_chave(texto):
+    """Extrai chave de acesso (44 dígitos) do texto do QR Code, com múltiplos padrões."""
+    try:
+        # Padrões comuns de URL de cupom fiscal (preservado do appscanner.py)
+        if 'p=' in texto:
+            return texto.split("p=")[1].split("|")[0]
+        if 'chNFe=' in texto:
+            return texto.split("chNFe=")[1].split("&")[0]
+        
+        # Buscar 44 dígitos (padrão NF-e/NFC-e)
+        match = re.search(r'\d{44}', texto)
+        return match.group() if match else None
+    except Exception:
+        return None
+                    </code>
+                </div>
+
+                <!-- Coluna da Direita: CARD DE RESUMO -->
+                <div class="w-1/4 flex items-center justify-start py-4 pl-5">
+                    <div class="dynamic-card bg-gray-50 hover:bg-gray-100 p-8 flex flex-col w-full border-2 border-dashed border-gray-300" onclick="toggleCard(this)">
+                        <i class="fas fa-search-dollar icon-large mb-4"></i>
+                        <h3 class="font-bold text-3xl text-gray-800">CAPTURA INTELIGENTE (REGEX)</h3>
+                        <div class="hidden-content pt-4 text-left">
+                            <p>O objetivo é isolar a Chave de Acesso (44 dígitos) do link completo do QR Code. O módulo utiliza **Expressões Regulares (Regex)** e lógicas de separação (`split`) para garantir a precisão da extração em diferentes formatos de cupons fiscais.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="slide-footer">Slide 3 / 8</div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- 4. NOVO SLIDE: ARMAZENAMENTO E DUPLICIDADE (Replicando o formato da imagem) -->
+        <!-- ========================================================================= -->
+        <div id="slide-4" class="slide flex-col">
+            <!-- Coluna da Esquerda: TÍTULO VERTICAL -->
+            <div class="flex h-full w-full">
+                <div class="w-1/4 flex flex-col justify-center items-start pr-8">
+                    <h2 class="text-6xl font-extrabold text-[#0d9488] mb-4 leading-tight border-none p-0">
+                        LÓGICA CORE: 2.<br>
+                        <span class="text-[#f97316] font-normal">ARMAZENAMENTO</span>
+                    </h2>
+                </div>
+
+                <!-- Coluna do Meio: CÓDIGO -->
+                <div class="w-1/2 flex items-center pr-5 py-4">
+                    <code class="code-block text-left h-full w-full">
+def salvar_dados(chave):
+    """Salva chave no CSV se não existir, garantindo formato de texto."""
+    chave_str = "'" + str(chave).strip() + "'" # Força STRING com aspas simples
+    
+    if os.path.exists(ARQUIVO_CHAVES):
+        df = pd.read_csv(ARQUIVO_CHAVES, dtype=str, encoding='utf-8-sig') 
+        # Verifica se a chave já existe (comparação como string)
+        if 'Chave' in df.columns and chave_str in df['Chave'].astype(str).values:
+            return False  # Já existe
+        
+        nova_linha = pd.DataFrame({'Chave': [chave_str]}, dtype=str)
+        df = pd.concat([df, nova_linha], ignore_index=True)
+    else:
+        df = pd.DataFrame({'Chave': [chave_str]}, dtype=str)
+    
+    # Salva o CSV com aspas em TODOS os valores (força texto)
+    df.to_csv(ARQUIVO_CHAVES, index=False, encoding='utf-8-sig', quoting=csv.QUOTE_ALL)
+    
+    return True
+                    </code>
+                </div>
+
+                <!-- Coluna da Direita: CARD DE RESUMO -->
+                <div class="w-1/4 flex items-center justify-start py-4 pl-5">
+                    <div class="dynamic-card bg-gray-50 hover:bg-gray-100 p-8 flex flex-col w-full border-2 border-dashed border-gray-300" onclick="toggleCard(this)">
+                        <i class="fas fa-database icon-large mb-4"></i>
+                        <h3 class="font-bold text-3xl text-gray-800">CONTROLE E ARMAZENAMENTO (PANDAS)</h3>
+                        <div class="hidden-content pt-4 text-left">
+                            <p>O sistema verifica a existência da chave antes de salvar, evitando duplicidades. O **Pandas** é essencial para forçar o armazenamento do dado como **String** no arquivo CSV, preservando os 44 dígitos sem erro de arredondamento (truncamento numérico).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="slide-footer">Slide 4 / 8</div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- 5. SLIDE: JUSTIFICATIVA TÉCNICA (O 'Porquê' das Ferramentas) - Antigo 4 -->
+        <!-- ========================================================================= -->
+        <div id="slide-5" class="slide">
+            <h2>STACK TECNOLÓGICO</h2>
+            
+            <div class="grid grid-cols-4 gap-6 mt-12">
+                
+                <!-- Card 1: Python/Pandas -->
+                <div class="dynamic-card bg-gray-50 hover:bg-gray-100 p-6 flex flex-col items-center" onclick="toggleCard(this)">
+                    <div class="tech-logo logo-python w-full">PYTHON + PD</div>
+                    <h3 class="font-bold text-2xl text-gray-800 mt-2">BASE E ESTRUTURA</h3>
+                    <div class="hidden-content pt-4 text-left text-base">
+                        <p>Python (linguagem central de IA/BI) e Pandas para manipulação, garantindo o formato string dos 44 dígitos.</p>
+                    </div>
+                </div>
+
+                <!-- Card 2: Streamlit -->
+                <div class="dynamic-card bg-gray-50 hover:bg-gray-100 p-6 flex flex-col items-center" onclick="toggleCard(this)">
+                    <div class="tech-logo logo-streamlit w-full">STREAMLIT</div>
+                    <h3 class="font-bold text-2xl text-gray-800 mt-2">INTERFACE WEB RÁPIDA</h3>
+                    <div class="hidden-content pt-4 text-left text-base">
+                        <p>Escolhido por ser "simples e direto", ideal para a prototipagem rápida da interface web intuitiva para a entrega.</p>
+                    </div>
+                </div>
+
+                <!-- Card 3: OpenCV/PyZBar -->
+                <div class="dynamic-card bg-gray-50 hover:bg-gray-100 p-6 flex flex-col items-center" onclick="toggleCard(this)">
+                    <div class="tech-logo logo-opencv w-full">OPENCV + PZB</div>
+                    <h3 class="font-bold text-2xl text-gray-800 mt-2">VISÃO COMPUTACIONAL</h3>
+                    <div class="hidden-content pt-4 text-left text-base">
+                        <p>OpenCV aplica filtros e rotações (Força Bruta) para maximizar a detecção de QR Codes de baixa qualidade.</p>
+                    </div>
+                </div>
+
+                <!-- Card 4: WebRTC -->
+                <div class="dynamic-card bg-gray-50 hover:bg-gray-100 p-6 flex flex-col items-center" onclick="toggleCard(this)">
+                    <div class="tech-logo logo-webrtc w-full">WEBRTC</div>
+                    <h3 class="font-bold text-2xl text-gray-800 mt-2">LEITURA EM TEMPO REAL</h3>
+                    <div class="hidden-content pt-4 text-left text-base">
+                        <p>Biblioteca essencial para acessar e processar o feed da câmera/webcam diretamente no navegador (funcionalidade "Câmera em Tempo Real").</p>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div class="slide-footer">Slide 5 / 8</div>
+        </div>
+        
+        <!-- ========================================================================= -->
+        <!-- 6. SLIDE: O QUE A APLICAÇÃO FAZ? (Antigo 5) -->
+        <!-- ========================================================================= -->
+        <div id="slide-6" class="slide">
+            <h2>O QUE A APLICAÇÃO FAZ?</h2>
+            
+            <div class="flex flex-col justify-center items-center mt-12 w-full space-y-8">
+                
+                <div class="grid grid-cols-3 gap-8 w-full">
+                    
+                    <!-- Hotspot 1 -->
+                    <div class="dynamic-card bg-white border-l-4 border-l-[#f97316] p-6 flex flex-col" onclick="toggleCard(this)">
+                        <i class="fas fa-search-dollar icon-large mb-4"></i>
+                        <h3 class="font-bold text-3xl text-gray-800">LEITURA DINÂMICA</h3>
+                        <div class="hidden-content pt-4 text-left">
+                            <p>Processamento do vídeo em tempo real com múltiplos algoritmos de Visão Computacional, garantindo agilidade na detecção.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Hotspot 2 -->
+                    <div class="dynamic-card bg-white border-l-4 border-l-[#f97316] p-6 flex flex-col" onclick="toggleCard(this)">
+                        <i class="fas fa-redo-alt icon-large mb-4"></i>
+                        <h3 class="font-bold text-3xl text-gray-800">FEEDBACK E TRAVA</h3>
+                        <div class="hidden-content pt-4 text-left">
+                            <p>Alertas de Sucesso (Verde) e Duplicidade (Amarelo). O sistema trava automaticamente por segundos após o sucesso para evitar múltiplas leituras.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Hotspot 3 -->
+                    <div class="dynamic-card bg-white border-l-4 border-l-[#f97316] p-6 flex flex-col" onclick="toggleCard(this)">
+                        <i class="fas fa-upload icon-large mb-4"></i>
+                        <h3 class="font-bold text-3xl text-gray-800">MÉTODOS DE ENTRADA</h3>
+                        <div class="hidden-content pt-4 text-left">
+                            <p>Alternância clara e simples entre a aba "Câmera em Tempo Real" e a aba "Upload de Imagem".</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Espaço para centralizar os cards no lugar da imagem -->
+                <div class="h-10"></div> 
+            </div>
+            
+            <div class="slide-footer">Slide 6 / 8</div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- 7. SLIDE: DEMONSTRAÇÃO - INTELIGÊNCIA E ROBUSTEZ (Antigo 6) -->
+        <!-- ========================================================================= -->
+        <div id="slide-7" class="slide">
+            <h2>ALGORITMO DE FORÇA BRUTA (ROBUSTEZ NA FOTO)</h2>
+            
+            <div class="grid grid-cols-3 gap-8 mt-12">
+                
+                <!-- Card 1: PRÉ-PROCESSAMENTO -->
+                <div class="dynamic-card bg-gray-50 hover:bg-gray-100 p-8 flex flex-col" onclick="toggleCard(this)">
+                    <i class="fas fa-filter icon-large mb-4"></i>
+                    <h3 class="font-bold text-3xl text-gray-800">PRÉ-PROCESSAMENTO</h3>
+                    <div class="hidden-content pt-4 text-left">
+                        <p>Aplicação de filtros avançados (Otsu, Adaptativo e CLAHE) para realçar o QR Code e compensar problemas de iluminação ou foco.</p>
+                    </div>
+                </div>
+
+                <!-- Card 2: TENTATIVAS MÚLTIPLAS -->
+                <div class="dynamic-card bg-gray-50 hover:bg-gray-100 p-8 flex flex-col" onclick="toggleCard(this)">
+                    <i class="fas fa-sync-alt icon-large mb-4"></i>
+                    <h3 class="font-bold text-3xl text-gray-800">TENTATIVAS MÚLTIPLAS</h3>
+                    <div class="hidden-content pt-4 text-left">
+                        <p>Testamos automaticamente mais de 100 variações (rotações de 0°, 90°, 180°, 270° e diversas escalas) para garantir a leitura em fotos complexas.</p>
+                    </div>
+                </div>
+
+                <!-- Card 3: CHAVE ISOLADA -->
+                <div class="dynamic-card bg-gray-50 hover:bg-gray-100 p-8 flex flex-col" onclick="toggleCard(this)">
+                    <i class="fas fa-lock icon-large mb-4"></i>
+                    <h3 class="font-bold text-3xl text-gray-800">CHAVE ISOLADA</h3>
+                    <div class="hidden-content pt-4 text-left">
+                        <p>A função extrair_chave() garante que apenas os 44 dígitos válidos sejam extraídos e enviados ao sistema de armazenamento.</p>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div class="slide-footer">Slide 7 / 8</div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- 8. SLIDE: ARMAZENAMENTO E CONFIABILIDADE DE DADOS (Antigo 7) -->
+        <!-- ========================================================================= -->
+        <div id="slide-8" class="slide">
+            <h2>BASE DE DADOS E CONTROLE DE CONFIANÇA</h2>
+            
+            <div class="grid grid-cols-3 gap-8 mt-12">
+                
+                <!-- Card 1: ESTRUTURA DE DADOS -->
+                <div class="dynamic-card bg-gray-50 hover:bg-gray-100 p-8 flex flex-col" onclick="toggleCard(this)">
+                    <i class="fas fa-table icon-large mb-4"></i>
+                    <h3 class="font-bold text-3xl text-gray-800">ESTRUTURA DE DADOS</h3>
+                    <div class="hidden-content pt-4 text-left">
+                        <p>Utilizamos o Arquivo chaves.csv (simulando um BD relacional simples) com a coluna única: Chave.</p>
+                    </div>
+                </div>
+
+                <!-- Card 2: PRESERVAÇÃO CRÍTICA -->
+                <div class="dynamic-card bg-gray-50 hover:bg-gray-100 p-8 flex flex-col" onclick="toggleCard(this)">
+                    <i class="fas fa-shield-alt icon-large mb-4"></i>
+                    <h3 class="font-bold text-3xl text-gray-800">PRESERVAÇÃO CRÍTICA</h3>
+                    <div class="hidden-content pt-4 text-left">
+                        <p>Decisão de modelagem: forçar o tipo String (dtype=str) via Pandas para evitar que o número de 44 dígitos seja truncado ou arredondado (erro comum em numéricos).</p>
+                    </div>
+                </div>
+
+                <!-- Card 3: CONTROLE DE DUPLICIDADE -->
+                <div class="dynamic-card bg-gray-50 hover:bg-gray-100 p-8 flex flex-col" onclick="toggleCard(this)">
+                    <i class="fas fa-ban icon-large mb-4"></i>
+                    <h3 class="font-bold text-3xl text-gray-800">CONTROLE DE DUPLICIDADE</h3>
+                    <div class="hidden-content pt-4 text-left">
+                        <p>A função salvar_dados() verifica a existência da chave antes de anexar a nova linha, impedindo a poluição da base com informações repetidas.</p>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div class="slide-footer">Slide 8 / 8</div>
+        </div>
+        
+    </div>
+    
+    <!-- JavaScript para Navegação e Dinamismo -->
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 8; // AUMENTADO para 8 slides
+        
+        // Função para mostrar o slide atual
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach(slide => slide.style.display = 'none');
+            
+            if (n < 1) {
+                currentSlide = totalSlides;
+            } else if (n > totalSlides) {
+                currentSlide = 1;
+            } else {
+                currentSlide = n;
+            }
+            
+            document.getElementById(`slide-${currentSlide}`).style.display = 'flex';
+            updateNavButtons();
+            
+            // Fecha todos os cards dinâmicos ao trocar de slide
+            document.querySelectorAll('.dynamic-card.active').forEach(card => card.classList.remove('active'));
+        }
+
+        // Navegação
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        // Atualiza a visibilidade dos botões de navegação
+        function updateNavButtons() {
+            document.getElementById('prev-btn').style.visibility = 'visible';
+            document.getElementById('next-btn').style.visibility = 'visible';
+            // Se for o primeiro ou último, pode-se desabilitar, mas mantive o loop infinito
+        }
+
+        // Dinamismo dos Cards (Mostrar/Ocultar Conteúdo Detalhado)
+        function toggleCard(cardElement) {
+            cardElement.classList.toggle('active');
+        }
+
+        // Event Listeners para botões
+        document.getElementById('next-btn').addEventListener('click', nextSlide);
+        document.getElementById('prev-btn').addEventListener('click', prevSlide);
+
+        // Event Listeners para teclas de seta
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            }
+        });
+
+        // Inicia a apresentação no primeiro slide
+        showSlide(currentSlide);
+    </script>
+</body>
+</html>
