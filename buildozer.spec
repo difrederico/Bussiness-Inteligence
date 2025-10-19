@@ -43,9 +43,6 @@ android.minapi = 21
 # (str) Android NDK version to use
 android.ndk = 23b
 
-# (int) Android SDK version to use
-android.sdk = 30
-
 # (str) Android entry point, default is ok for Kivy-based app
 android.entrypoint = org.kivy.android.PythonActivity
 
@@ -101,8 +98,9 @@ android.logcat_filters = *:S python:D
 # (bool) Copy library instead of making a libpymodules.so
 android.copy_libs = 1
 
-# (str) The Android arch to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
-android.arch = arm64-v8a
+# (list) The Android archs to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
+# You can also specify multiple archs separated by comma: armeabi-v7a,arm64-v8a
+android.archs = arm64-v8a
 
 [buildozer]
 
