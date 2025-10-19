@@ -21,9 +21,9 @@ source.include_patterns = assets/*,*.py
 # (str) Application versioning (method 1)
 version = 1.0.0
 
-# (list) Application requirements
+# (list) Application requirements  
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy,kivymd,pillow,opencv-python,pyzbar,numpy,plyer,requests
+requirements = python3,kivy,pillow,pyzbar,numpy,plyer,requests
 
 # (str) Supported orientation (one of landscape, portrait or all)
 orientation = portrait

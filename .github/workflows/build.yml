@@ -39,9 +39,10 @@ jobs:
         echo "Cache limpo para forçar download do NDK 25b"
 
     - name: Build APK with Buildozer
+      timeout-minutes: 90
       run: |
         chmod +x build_apk.sh
-        echo "y" | ./build_apk.sh
+        echo "y" | timeout 5400 ./build_apk.sh
         
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
