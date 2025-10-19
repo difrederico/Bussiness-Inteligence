@@ -46,6 +46,9 @@ android.ndk = 23b
 # (str) Android entry point, default is ok for Kivy-based app
 android.entrypoint = org.kivy.android.PythonActivity
 
+# (bool) Accept SDK license
+android.accept_sdk_license = True
+
 # (list) Pattern to whitelist for the whole project
 android.whitelist = 
 

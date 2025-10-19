@@ -31,11 +31,12 @@ jobs:
         pip install cython
         pip install buildozer
         pip install kivy opencv-python pyzbar numpy
-    
+
     - name: Build APK with Buildozer
       run: |
-        buildozer android debug
-    
+        chmod +x build_apk.sh
+        echo "y" | ./build_apk.sh
+        
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
