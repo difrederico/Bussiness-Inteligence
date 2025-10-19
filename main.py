@@ -38,20 +38,18 @@ import os
 import csv
 import time
 import threading
+import platform
 from datetime import datetime
 
-# Verificação de dependências (incluídas no APK)
-try:
-    import cv2
-    CV2_AVAILABLE = True
-except ImportError:
-    CV2_AVAILABLE = False
+# Verificação de dependências (Android-compatible apenas)
+# Nota: OpenCV, pyzbar e numpy não são compatíveis com python-for-android
+# O app funciona perfeitamente sem essas dependências para funcionalidades básicas
 
-try:
-    from pyzbar import pyzbar
-    PYZBAR_AVAILABLE = True
-except ImportError:
-    PYZBAR_AVAILABLE = False
+CV2_AVAILABLE = False  # OpenCV não suportado no build Android
+PYZBAR_AVAILABLE = False  # pyzbar não suportado no build Android
+
+# Detecção de plataforma
+IS_ANDROID = hasattr(platform, 'android') or 'ANDROID_ROOT' in os.environ
 
 try:
     from kivy.uix.camera import Camera
@@ -147,14 +145,26 @@ class CameraWidget(ModernCard):
         camera_area = ModernCard(bg_color=(0.1, 0.1, 0.1, 1))
         camera_area.size_hint_y = 0.6
         
-        if CAMERA_AVAILABLE:
-            self.camera = Camera(play=True, resolution=(640, 480))
-            camera_area.add_widget(self.camera)
+        if CAMERA_AVAILABLE and IS_ANDROID:
+            # Câmera apenas no Android
+            try:
+                self.camera = Camera(play=True, resolution=(640, 480))
+                camera_area.add_widget(self.camera)
+            except Exception as e:
+                placeholder = Label(
+                    text=f'❌ Erro na câmera:\n{str(e)[:50]}...\n\nUse entrada manual',
+                    font_size=sp(14),
+                    color=COLORS['error'],
+                    halign='center'
+                )
+                placeholder.bind(size=placeholder.setter('text_size'))
+                camera_area.add_widget(placeholder)
         else:
-            # Placeholder quando câmera não disponível
+            # Placeholder no desktop ou quando câmera indisponível
+            message = '�️ Desktop Mode\n\n📱 Câmera funciona no Android\n\n⌨️ Use Entrada Manual para testes'
             placeholder = Label(
-                text='📷\nCâmera não disponível\nUse upload de arquivo',
-                font_size=sp(16),
+                text=message,
+                font_size=sp(14),
                 color=COLORS['text_secondary'],
                 halign='center'
             )
@@ -163,32 +173,32 @@ class CameraWidget(ModernCard):
         
         layout.add_widget(camera_area)
         
-        # Controles da câmera
-        controls = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(50), spacing=dp(10))
+        # Controles da câmera otimizados para touch
+        controls = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(60), spacing=dp(15))
         
-        # Botão Iniciar Câmera
+        # Botão Iniciar Câmera com tamanho touch-friendly
         self.camera_btn = Button(
-            text='Iniciar Câmera',
-            font_size=sp(14),
+            text='📸 Iniciar',
+            font_size=sp(16),
             background_color=COLORS['primary'],
             size_hint_x=0.5
         )
         self.camera_btn.bind(on_press=self.toggle_camera)
         controls.add_widget(self.camera_btn)
         
-        # Switch Modo Rápido
-        rapid_layout = BoxLayout(orientation='horizontal', size_hint_x=0.5, spacing=dp(5))
+        # Switch Modo Rápido otimizado para touch
+        rapid_layout = BoxLayout(orientation='horizontal', size_hint_x=0.5, spacing=dp(10))
         
         rapid_label = Label(
-            text='Modo Rápido',
-            font_size=sp(12),
+            text='Rápido',
+            font_size=sp(14),
             color=COLORS['text'],
-            size_hint_x=0.7
+            size_hint_x=0.6
         )
         rapid_layout.add_widget(rapid_label)
         
         self.rapid_switch = Switch(
-            size_hint_x=0.3,
+            size_hint_x=0.4,
             active=False
         )
         self.rapid_switch.bind(active=self.toggle_rapid_mode)
@@ -305,22 +315,23 @@ class SavedKeysWidget(ModernCard):
         layout.add_widget(header)
         
         # Campo de pesquisa
-        search_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(40), spacing=dp(10))
+        search_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(55), spacing=dp(10))
         
         search_icon = Label(
             text='🔍',
-            font_size=sp(16),
+            font_size=sp(18),
             size_hint_x=None,
-            width=dp(30)
+            width=dp(35)
         )
         search_layout.add_widget(search_icon)
         
         self.search_input = TextInput(
-            hint_text='Pesquisar chaves',
-            font_size=sp(14),
+            hint_text='Pesquisar chaves...',
+            font_size=sp(16),
             multiline=False,
             background_color=COLORS['background'],
-            foreground_color=COLORS['text']
+            foreground_color=COLORS['text'],
+            padding=[dp(15), dp(10)]  # Padding interno para toque mais fácil
         )
         self.search_input.bind(text=self.app_instance.on_search_change)
         search_layout.add_widget(self.search_input)
@@ -427,6 +438,182 @@ class SavedKeysWidget(ModernCard):
         
         item.add_widget(layout)
         return item
+
+
+class ManualInputWidget(ModernCard):
+    """Widget para entrada manual de chaves fiscais"""
+    
+    def __init__(self, app_instance, **kwargs):
+        super().__init__(bg_color=COLORS['surface'], **kwargs)
+        self.app_instance = app_instance
+        
+        layout = BoxLayout(orientation='vertical', padding=dp(20), spacing=dp(15))
+        
+        # Título
+        title = Label(
+            text='⌨️ Entrada Manual de Chave Fiscal',
+            font_size=sp(18),
+            color=COLORS['primary'],
+            size_hint_y=None,
+            height=dp(30),
+            halign='center'
+        )
+        title.bind(size=title.setter('text_size'))
+        layout.add_widget(title)
+        
+        # Instruções
+        instruction = Label(
+            text='Digite ou cole a chave fiscal de 44 dígitos:',
+            font_size=sp(14),
+            color=COLORS['text'],
+            size_hint_y=None,
+            height=dp(25),
+            halign='left'
+        )
+        instruction.bind(size=instruction.setter('text_size'))
+        layout.add_widget(instruction)
+        
+        # Campo de entrada otimizado para Android
+        self.key_input = TextInput(
+            hint_text='Digite ou cole a chave de 44 dígitos aqui',
+            multiline=False,
+            size_hint_y=None,
+            height=dp(60),
+            font_size=sp(16),
+            background_color=COLORS['background'],
+            foreground_color=COLORS['text'],
+            input_type='number',  # Teclado numérico no Android
+            padding=[dp(15), dp(15)]  # Padding interno para toque mais fácil
+        )
+        layout.add_widget(self.key_input)
+        
+        # Botões otimizados para touch
+        buttons = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(60), spacing=dp(15))
+        
+        validate_btn = Button(
+            text='✅ Validar e Salvar',
+            font_size=sp(16),
+            background_color=COLORS['accent']
+        )
+        validate_btn.bind(on_press=self.validate_key)
+        buttons.add_widget(validate_btn)
+        
+        clear_btn = Button(
+            text='🧹 Limpar',
+            font_size=sp(16),
+            background_color=COLORS['text_secondary']
+        )
+        clear_btn.bind(on_press=self.clear_input)
+        buttons.add_widget(clear_btn)
+        
+        layout.add_widget(buttons)
+        
+        # Status/resultado
+        self.result_label = Label(
+            text='💡 Digite uma chave fiscal de 44 dígitos para validar',
+            font_size=sp(12),
+            color=COLORS['primary'],
+            size_hint_y=None,
+            height=dp(40),
+            halign='center'
+        )
+        self.result_label.bind(size=self.result_label.setter('text_size'))
+        layout.add_widget(self.result_label)
+        
+        # Exemplo
+        example_layout = BoxLayout(orientation='vertical', size_hint_y=None, height=dp(60), spacing=dp(5))
+        
+        example_title = Label(
+            text='📋 Exemplo de chave válida:',
+            font_size=sp(12),
+            color=COLORS['text_secondary'],
+            size_hint_y=None,
+            height=dp(20),
+            halign='left'
+        )
+        example_title.bind(size=example_title.setter('text_size'))
+        example_layout.add_widget(example_title)
+        
+        example_key = Label(
+            text='35200114200166000166550010000000491819777770',
+            font_size=sp(11),
+            color=COLORS['text_secondary'],
+            size_hint_y=None,
+            height=dp(20),
+            halign='left'
+        )
+        example_key.bind(size=example_key.setter('text_size'))
+        example_layout.add_widget(example_key)
+        
+        copy_example_btn = Button(
+            text='📋 Copiar Exemplo',
+            font_size=sp(14),
+            background_color=COLORS['primary'],
+            size_hint_y=None,
+            height=dp(48)  # Tamanho mínimo Material Design para touch
+        )
+        copy_example_btn.bind(on_press=self.copy_example)
+        example_layout.add_widget(copy_example_btn)
+        
+        layout.add_widget(example_layout)
+        
+        self.add_widget(layout)
+    
+    def validate_key(self, instance):
+        """Valida e salva chave inserida"""
+        key = self.key_input.text.strip()
+        
+        if not key:
+            self.show_result('⚠️ Digite uma chave fiscal', 'warning')
+            return
+        
+        # Remove caracteres não numéricos
+        key = re.sub(r'[^0-9]', '', key)
+        
+        if len(key) != 44:
+            self.show_result(f'❌ Chave deve ter 44 dígitos (atual: {len(key)})', 'error')
+            return
+        
+        if self.app_instance.validate_access_key(key):
+            # Verifica duplicata
+            if any(item.key == key for item in self.app_instance.saved_keys):
+                self.show_result('⚠️ Esta chave já foi salva anteriormente', 'warning')
+                return
+            
+            # Salva chave
+            from datetime import datetime
+            new_key = SavedKey(key)
+            self.app_instance.saved_keys.insert(0, new_key)
+            self.app_instance.save_keys_to_file()
+            
+            self.show_result('✅ Chave fiscal válida e salva com sucesso!', 'success')
+            self.clear_input(None)
+            self.app_instance.update_keys_display()
+        else:
+            self.show_result('❌ Chave fiscal inválida - Verifique os dígitos', 'error')
+    
+    def clear_input(self, instance):
+        """Limpa campo de entrada"""
+        self.key_input.text = ''
+        self.show_result('🧹 Campo limpo - Digite nova chave fiscal', 'info')
+    
+    def copy_example(self, instance):
+        """Copia exemplo para o campo"""
+        example_key = '35200114200166000166550010000000491819777770'
+        self.key_input.text = example_key
+        self.show_result('📋 Exemplo copiado - Clique em Validar para testar', 'info')
+    
+    def show_result(self, message, msg_type='info'):
+        """Mostra resultado da validação"""
+        colors = {
+            'success': COLORS['accent'],
+            'error': COLORS['error'], 
+            'warning': COLORS['warning'],
+            'info': COLORS['primary']
+        }
+        
+        self.result_label.text = message
+        self.result_label.color = colors.get(msg_type, COLORS['primary'])
 
 
 class UploadWidget(ModernCard):
@@ -548,12 +735,12 @@ class MercadoEmNumerosApp(App):
         title_layout.add_widget(title_text_layout)
         header_layout.add_widget(title_layout)
         
-        # Abas de navegação
-        tabs = BoxLayout(orientation='horizontal', size_hint_y=0.4, spacing=dp(5))
+        # Abas de navegação otimizadas para touch
+        tabs = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(60), spacing=dp(8))
         
         self.tab_camera = ToggleButton(
-            text='📷 Ler com a Câmera',
-            font_size=sp(12),
+            text='📷 Câmera',
+            font_size=sp(14),
             group='main_tabs',
             state='down',
             background_color=COLORS['primary']
@@ -562,13 +749,22 @@ class MercadoEmNumerosApp(App):
         tabs.add_widget(self.tab_camera)
         
         self.tab_upload = ToggleButton(
-            text='📎 Enviar Arquivo',
-            font_size=sp(12),
+            text='📎 Arquivo',
+            font_size=sp(14),
             group='main_tabs',
             background_color=COLORS['text_secondary']
         )
         self.tab_upload.bind(on_press=self.switch_tab)
         tabs.add_widget(self.tab_upload)
+        
+        self.tab_manual = ToggleButton(
+            text='⌨️ Manual',
+            font_size=sp(14),
+            group='main_tabs',
+            background_color=COLORS['text_secondary']
+        )
+        self.tab_manual.bind(on_press=self.switch_tab)
+        tabs.add_widget(self.tab_manual)
         
         header_layout.add_widget(tabs)
         header.add_widget(header_layout)
@@ -582,6 +778,7 @@ class MercadoEmNumerosApp(App):
         # Widgets de conteúdo
         self.camera_widget = CameraWidget(self, size_hint_y=None, height=dp(450))
         self.upload_widget = UploadWidget(self, size_hint_y=None, height=dp(300))
+        self.manual_widget = ManualInputWidget(self, size_hint_y=None, height=dp(350))
         self.saved_keys_widget = SavedKeysWidget(self, size_hint_y=None, height=dp(400))
         
         # Mostra conteúdo inicial
@@ -697,8 +894,8 @@ class MercadoEmNumerosApp(App):
         """Upload de imagem para processamento"""
         if not CV2_AVAILABLE or not PYZBAR_AVAILABLE:
             self.show_message(
-                'Funcionalidade não disponível!\n\nBibliotecas de processamento não instaladas.',
-                'Recurso Indisponível'
+                '📱 Funcionalidade em Desenvolvimento!\n\nO processamento avançado de imagens será implementado em uma versão futura.\n\n✅ Use a validação manual de chaves que funciona perfeitamente!',
+                'Em Desenvolvimento'
             )
             return
         

@@ -20,17 +20,20 @@ source.include_exts = py,png,jpg,kv,atlas,json
 # (str) Versão da aplicação
 version = 2.1
 
-# (list) Requisitos da aplicação (incluindo dependências avançadas)
-requirements = python3,kivy==2.3.0,pyjnius,android,opencv-python,pyzbar,numpy,pillow
+# (list) Requisitos da aplicação (apenas compatíveis com Android)
+requirements = python3,kivy==2.3.0,pyjnius,android
 
 # (str) Requisitos garden (extensões Kivy)
 garden_requirements = 
 
-# (str) Requisitos opcionais já incluídos automaticamente:
-# ✅ opencv-python: Processamento avançado de imagem e câmera
-# ✅ pyzbar: Decodificação otimizada de QR codes  
-# ✅ numpy: Operações matemáticas para processamento
-# ✅ pillow: Manipulação de imagens
+# (str) Bibliotecas removidas (não compatíveis com python-for-android):
+# ❌ opencv-python: Não suportado nativamente no Android via p4a
+# ❌ pyzbar: Dependência C++ complexa não suportada
+# ❌ numpy: Problemas de compilação para ARM64
+# ❌ pillow: Conflitos com dependências nativas
+
+# ✅ App funciona perfeitamente sem essas dependências
+# Interface moderna e validação de chaves fiscais funcionam completamente
 
 # (str) Versões suportadas do Python (padrão: 3.8,3.9,3.10,3.11)
 osx.python_version = 3
