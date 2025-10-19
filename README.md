@@ -1,311 +1,236 @@
-# 📱 Leitor de Cupons Fiscais - Android
+# 📱 Leitor de Cupons Fiscais - Android Completo
 
-**🚀 APK PRONTO PARA DOWNLOAD! 🚀**
+Aplicativo Android completo para leitura e gerenciamento de cupons fiscais brasileiros com todas as funcionalidades essenciais do app desktop original.
 
-[![Build Android APK](https://github.com/usuario/leitor-qr-fiscal/actions/workflows/build.yml/badge.svg)](https://github.com/usuario/leitor-qr-fiscal/actions/workflows/build.yml)
+## ✨ Funcionalidades Principais
 
-## 📱 **[BAIXAR APK AQUI](https://github.com/usuario/leitor-qr-fiscal/releases/latest)** 
+### 📝 Entrada de Dados
+- **Digitação manual** de chaves fiscais (44 dígitos)
+- **Validação automática** com algoritmo de dígito verificador brasileiro
+- **Limpeza** de caracteres não numéricos
+- **Interface touch-friendly** otimizada para Android
 
----
+### 📷 Leitura de QR Codes
+- **Câmera em tempo real** com auto-detecção
+- **Captura manual** de imagens
+- **Auto scan** contínuo para leitura rápida
+- **Upload de imagens** com QR codes existentes
+- **Detecção avançada** quando bibliotecas disponíveis
 
-## 🚀 Instalação Rápida no Android
-
-### 1️⃣ **Baixar APK**
-- Clique no link acima
-- Baixe `LeitorQR-Fiscal.apk`
-
-### 2️⃣ **Preparar Celular**
-```
-Configurações → Segurança → Fontes Desconhecidas → ATIVAR
-```
-
-### 3️⃣ **Instalar**
-1. Abra o APK baixado
-2. Toque "Instalar"
-3. Confirme "Instalar mesmo assim"
-
-### 4️⃣ **Configurar Permissões**
-```
-Configurações → Apps → Leitor QR Fiscal → Permissões
-✅ Câmera: Permitir
-✅ Armazenamento: Permitir
-```
-
----
-
-## 📋 Descrição
-
-Aplicação móvel desenvolvida em **Kivy** para Android que permite:
-
-✅ **Leitura de QR codes** de cupons fiscais via câmera  
-✅ **Upload de imagens** com QR codes da galeria  
-✅ **Validação automática** das chaves de acesso fiscais  
-✅ **Armazenamento seguro** das chaves lidas  
-✅ **Exportação CSV** dos dados coletados  
-✅ **Interface otimizada** para dispositivos móveis  
-
----
-
-## 🔧 Funcionalidades
-
-### 📷 Detecção Avançada
-- **3 modos de detecção**: Simples, Melhorado, Agressivo
-- **15+ técnicas** de processamento de imagem
-- **Otimização mobile** para melhor performance
-- **Suporte rotação** e diferentes escalas
-
-### 📊 Gerenciamento de Dados
+### 💾 Gerenciamento de Dados
 - **Armazenamento local** em JSON
-- **Busca e filtros** nas chaves salvas
-- **Validação DV** das chaves de acesso
-- **Detecção de duplicatas** automática
+- **Lista organizada** por data (mais recentes primeiro)
+- **Busca em tempo real** nas chaves salvas
+- **Prevenção de duplicatas** automática
+- **Contador de chaves** em tempo real
 
-### 📤 Exportação
-- **Formato CSV** padronizado
-- **Separador ponto-vírgula** (Excel BR)
-- **Encoding UTF-8** com BOM
-- **Salva na pasta Downloads**
+### 📤 Exportação e Compartilhamento
+- **Exportação CSV** com timestamp completo
+- **Cópia para clipboard** individual
+- **Exclusão seletiva** com confirmação
+- **Limpeza geral** com proteção
 
----
+### 🔄 Modo Batch
+- **Leitura rápida** sem popups
+- **Contador de lote** em tempo real
+- **Ideal para inventários** e coletas massivas
+- **Toggle simples** liga/desliga
 
-## 📱 Requisitos Android
+### ⚙️ Configurações e Status
+- **Status das bibliotecas** em tempo real
+- **Instruções de instalação** de dependências
+- **Estatísticas de uso** 
+- **Interface accordion** organizada
 
-- **Android 5.0+** (API 21)
-- **Câmera** com permissão
-- **Armazenamento** com permissão
-- **4GB RAM** recomendado
+## 🛠️ Dependências
 
----
+### ✅ Básicas (Incluídas)
+- **Python 3** - Runtime principal
+- **Kivy 2.3.0** - Framework de interface
+- **JSON** - Persistência de dados
+- **CSV** - Exportação de dados
+- **RE** - Validação de padrões
 
-## 🚀 Instalação
+### 📦 Opcionais (Funcionalidade Avançada)
+- **OpenCV** - Processamento avançado de imagem
+- **pyzbar** - Decodificação otimizada de QR codes
+- **PIL** - Manipulação de imagens
 
-### Método 1: APK Pré-compilado
 ```bash
-# Baixe o APK e instale diretamente
-adb install qrreader-1.0.0.apk
+# Para funcionalidade completa
+pip install opencv-python pyzbar pillow
+
+# No Android/Termux
+pkg install python-opencv zbar
+pip install pyzbar pillow
 ```
 
-### Método 2: Compilação com Buildozer
+## 📱 Build para Android
+
+### 1. Preparar Ambiente
 ```bash
-# Instale buildozer
+# Instalar buildozer
 pip install buildozer
 
-# Clone o projeto
-git clone [repo]
-cd v2-android
+# Verificar dependências (Linux/macOS)
+buildozer android debug
+```
 
-# Compile para Android
+### 2. Build APK
+```bash
+# Build debug
 buildozer android debug
 
-# Instale no dispositivo conectado
-buildozer android deploy run
+# Build release
+buildozer android release
 ```
 
----
-
-## 📚 Dependências
-
-### Python Packages
-- **kivy**: Framework UI móvel
-- **kivymd**: Material Design
-- **opencv-python**: Processamento de imagem
-- **pyzbar**: Decodificação QR
-- **numpy**: Computação numérica
-- **pillow**: Manipulação de imagem
-- **plyer**: APIs nativas Android
-
-### Android Permissions
-- `CAMERA`: Acesso à câmera
-- `WRITE_EXTERNAL_STORAGE`: Salvar arquivos
-- `READ_EXTERNAL_STORAGE`: Ler arquivos  
-- `INTERNET`: Atualizações (opcional)
-
----
-
-## 🎯 Como Usar
-
-### 1. **Leitura por Câmera**
-- Abra o app
-- Toque em "📷 Iniciar Câmera"
-- Aponte para o QR code do cupom
-- Aguarde a detecção automática
-
-### 2. **Leitura por Upload**
-- Toque em "📤 Upload"
-- Selecione imagem da galeria
-- Aguarde o processamento
-
-### 3. **Gerenciar Chaves**
-- Visualize lista de cupons lidos
-- Use 📋 para copiar chaves
-- Busque por texto específico
-- Exporte dados em CSV
-
-### 4. **Configurações**
-- **Modo**: Simples/Melhorado/Agressivo
-- **Debug**: Logs detalhados
-- **Performance**: Monitoramento FPS
-
----
-
-## 🔍 Algoritmos de Detecção
-
-### 🟢 Simples
-- Detecção direta sem pré-processamento
-- **Mais rápido**, menor precisão
-- Ideal para QR codes nítidos
-
-### 🟡 Melhorado (Padrão)
-- Equalização de histograma
-- Threshold adaptativo
-- Filtro bilateral
-- **Balanceado** velocidade/precisão
-
-### 🔴 Agressivo
-- Múltiplas escalas (0.8x, 1.2x, 1.5x)
-- Rotações (-15°, -10°, +10°, +15°)
-- **Máxima precisão** para casos difíceis
-- Mais lento, ideal para imagens borradas
-
----
-
-## 📊 Estrutura de Dados
-
-### Chave Fiscal Salva
-```json
-{
-  "key": "35200114200166000166550010000000046176777681",
-  "timestamp": 1640995200.0
-}
-```
-
-### Arquivo CSV Exportado
-```csv
-Chave_Fiscal;Data_Leitura;Hora_Leitura
-35200114200166000166550010000000046176777681;31/12/2021;18:00:00
-```
-
----
-
-## 🛠️ Desenvolvimento
-
-### Estrutura do Projeto
-```
-v2-android/
-├── main.py              # Aplicação principal
-├── buildozer.spec       # Configuração Android
-├── README.md           # Documentação
-└── assets/             # Recursos (ícones, etc)
-```
-
-### Logs e Debug
-```python
-# Ativar debug no app
-self.debug_switch.active = True
-
-# Logs no Android
-adb logcat | grep python
-```
-
-### Testes Locais
+### 3. Instalar no Dispositivo
 ```bash
-# Executar no desktop (testes)
-python main.py
+# Via ADB
+adb install bin/leitorqr-*-debug.apk
 
-# Testar dependências
-python -c "import cv2, pyzbar, numpy, kivy"
+# Via transferência de arquivo
+# Copie o APK para o dispositivo e instale
 ```
 
----
+## 📋 Uso da Aplicação
 
-## 🔄 Diferenças da Versão Desktop
+### Validação Manual
+1. Digite ou cole uma chave fiscal de 44 dígitos
+2. Toque em "✅ Validar Chave"
+3. Chave válida será automaticamente salva
 
-| Funcionalidade | Desktop | Android |
-|---|---|---|
-| **Framework** | Tkinter | Kivy |
-| **Interface** | Janelas | Touch/Mobile |
-| **Câmera** | OpenCV VideoCapture | Kivy Camera |
-| **Audio** | pygame | Plyer notifications |
-| **Arquivos** | tkinter.filedialog | Android Storage |
-| **Clipboard** | tkinter/pyperclip | Android ClipboardManager |
+### Leitura por QR Code
+1. Toque em "📷 Câmera QR Code"
+2. Posicione o QR code na tela
+3. Use "🔄 Auto Scan" para detecção contínua
+4. Ou "📸 Capturar QR" para captura manual
 
----
+### Upload de Imagem
+1. Toque em "🖼️ Upload Imagem"
+2. Selecione arquivo com QR code
+3. Aguarde processamento automático
 
-## ⚡ Performance
+### Gerenciar Chaves Salvas
+1. Acesse seção "💾 Chaves Salvas"
+2. Use busca para filtrar
+3. Copie, exclua ou exporte conforme necessário
 
-### Otimizações Mobile
-- **FPS limitado**: 10 FPS para economia de bateria
-- **Cooldown**: 2s entre detecções sucessivas
-- **Técnicas reduzidas**: Apenas as mais eficientes
-- **Resolução adaptativa**: Redimensiona frames grandes
+### Modo Batch
+1. Ative o switch "Batch" na seção de chaves
+2. Leia múltiplos QR codes rapidamente
+3. Contador mostra progresso em tempo real
 
-### Monitoramento
-- **FPS em tempo real** no debug
-- **Contador de frames** processados
-- **Tempo de resposta** das detecções
+### Exportar Dados
+1. Toque em "📤 Exportar CSV"
+2. Arquivo será salvo no armazenamento do dispositivo
+3. Inclui todas as chaves com timestamps
 
----
+## 🔧 Configuração Avançada
+
+### Arquivo buildozer.spec
+```ini
+[app]
+title = Leitor de Cupons Fiscais
+package.name = leitorqr
+package.domain = com.business.fiscal
+source.main = main_android_completo.py
+
+# Permissões necessárias
+android.permissions = INTERNET,CAMERA,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
+
+# Arquitetura alvo
+android.archs = arm64-v8a
+
+# APIs suportadas
+android.minapi = 21
+android.api = 30
+```
+
+## 📊 Validação de Chaves Fiscais
+
+O app implementa o algoritmo oficial brasileiro para validação de chaves de acesso:
+
+1. **Formato**: 44 dígitos numéricos
+2. **Estrutura**: 43 dígitos + 2 dígitos verificadores
+3. **Algoritmo**: Módulo 11 com pesos específicos
+4. **Conformidade**: Totalmente compatível com padrão nacional
+
+## 🚀 Melhorias em Relação à Versão Simplificada
+
+### Interface
+- ✅ **Accordion organizado** por funcionalidades
+- ✅ **ScrollView** para listas longas
+- ✅ **Feedback visual** em todas as ações
+- ✅ **Cores contextuais** (verde/vermelho/laranja)
+
+### Funcionalidades
+- ✅ **Câmera com auto-scan** contínuo
+- ✅ **Upload de imagens** com seletor
+- ✅ **Busca em tempo real** nas chaves
+- ✅ **Modo batch** para leitura massiva
+- ✅ **Exportação CSV** completa
+
+### Dados
+- ✅ **Timestamps precisos** em cada chave
+- ✅ **Prevenção de duplicatas** inteligente
+- ✅ **Persistência robusta** com tratamento de erros
+- ✅ **Estrutura JSON** organizada
+
+### UX/UI
+- ✅ **Touch-friendly** para dispositivos móveis
+- ✅ **Mensagens claras** e informativas
+- ✅ **Confirmações** para ações destrutivas
+- ✅ **Status em tempo real** de bibliotecas
+
+## 🔄 Compatibilidade
+
+### Android
+- **API 21+** (Android 5.0+)
+- **ARM64** e **ARMv7** suportados
+- **Permissões** granulares apropriadas
+- **AndroidX** habilitado
+
+### Bibliotecas
+- **Graceful degradation** - funciona sem dependências opcionais
+- **Detecção automática** de capacidades
+- **Instruções integradas** para instalação
+
+## 📈 Roadmap Futuro
+
+- [ ] **Sincronização em nuvem** 
+- [ ] **Relatórios avançados** com gráficos
+- [ ] **API REST** para integração
+- [ ] **Notificações push** 
+- [ ] **Modo offline** aprimorado
+- [ ] **Backup/restore** automático
 
 ## 🐛 Troubleshooting
 
-### Problemas Comuns
+### Câmera não funciona
+- Verifique permissões no Android
+- Instale kivy[base] completo
+- Reinicie o aplicativo
 
-**❌ Câmera não funciona**
-```bash
-# Verificar permissões
-adb shell pm grant com.business.qrreader android.permission.CAMERA
-```
+### QR codes não são detectados
+- Instale opencv-python e pyzbar
+- Verifique iluminação adequada
+- Use modo manual se auto-scan falhar
 
-**❌ QR não detecta**
-- Teste modo "Agressivo"
-- Melhore iluminação
-- Aproxime/afaste câmera
-- Tente upload de imagem
+### Exportação falha
+- Verifique permissões de armazenamento
+- Libere espaço no dispositivo
+- Tente exportar com menos chaves
 
-**❌ Exportação falha**
-```bash
-# Verificar permissão storage
-adb shell pm grant com.business.qrreader android.permission.WRITE_EXTERNAL_STORAGE
-```
+## 📞 Suporte
 
-**❌ App trava/lento**
-- Feche outros apps
-- Reinicie dispositivo
-- Use modo "Simples"
-- Verifique RAM disponível
+Para suporte técnico ou relato de bugs:
+- 📧 Email: suporte@exemplo.com
+- 🐛 Issues: GitHub repository
+- 📱 Versão do app: 2.0
+- 🤖 Android: API 21-30
 
 ---
 
-## 🔮 Próximas Versões
-
-### v1.1
-- [ ] Tema escuro/claro
-- [ ] Sincronização cloud
-- [ ] Histórico por data
-- [ ] Estatísticas avançadas
-
-### v1.2
-- [ ] OCR texto cupons
-- [ ] Categorização automática
-- [ ] Relatórios PDF
-- [ ] Widget home screen
-
----
-
-## 📄 Licença
-
-**MIT License** - Uso livre para fins comerciais e pessoais
-
----
-
-## 👨‍💻 Desenvolvedor
-
-**Projeto criado para otimização de processos fiscais empresariais**
-
-🔗 **Baseado na versão desktop** com funcionalidades equivalentes  
-📱 **Otimizado para dispositivos móveis** Android  
-⚡ **Performance e usabilidade** aprimoradas para touch  
-
----
-
-*Versão Android 1.0.0 - Desenvolvido com ❤️ em Python + Kivy*
+**© 2024 Mercado em Números - Leitor de Cupons Fiscais v2.0**
