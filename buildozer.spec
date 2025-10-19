@@ -3,10 +3,10 @@
 title = Leitor de Cupons Fiscais
 
 # (str) Nome do pacote
-package.name = leitorqr
+package.name = leitorqrfiscal
 
 # (str) Domínio do pacote (usado para Android/iOS packaging)
-package.domain = com.business.fiscal
+package.domain = com.business
 
 # (str) Arquivo principal do app
 source.main = main.py
