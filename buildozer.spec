@@ -18,14 +18,19 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,json
 
 # (str) Versão da aplicação
-version = 2.0
+version = 2.1
 
-# (list) Requisitos da aplicação
-requirements = python3,kivy==2.3.0,pyjnius,android
+# (list) Requisitos da aplicação (incluindo dependências avançadas)
+requirements = python3,kivy==2.3.0,pyjnius,android,opencv-python,pyzbar,numpy,pillow
 
-# (str) Requisitos opcionais (para funcionalidade completa)
-# Para usar recursos avançados, instale separadamente:
-# pip install opencv-python pyzbar
+# (str) Requisitos garden (extensões Kivy)
+garden_requirements = 
+
+# (str) Requisitos opcionais já incluídos automaticamente:
+# ✅ opencv-python: Processamento avançado de imagem e câmera
+# ✅ pyzbar: Decodificação otimizada de QR codes  
+# ✅ numpy: Operações matemáticas para processamento
+# ✅ pillow: Manipulação de imagens
 
 # (str) Versões suportadas do Python (padrão: 3.8,3.9,3.10,3.11)
 osx.python_version = 3
