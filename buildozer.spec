@@ -9,7 +9,7 @@ package.name = leitorqr
 package.domain = com.business.fiscal
 
 # (str) Arquivo principal do app
-source.main = main_android_completo.py
+source.main = main.py
 
 # (list) Diretório de código fonte onde os arquivos Python são encontrados
 source.dir = .
@@ -75,11 +75,11 @@ android.bootstrap = sdl2
 # (bool) Aceitar licenças do SDK automaticamente
 android.accept_sdk_license = True
 
-# (str) Ícone da aplicação
-icon.filename = %(source.dir)s/icon.png
+# (str) Ícone da aplicação (comentado - usando ícone padrão)
+# icon.filename = %(source.dir)s/icon.png
 
-# (str) Presplash da aplicação
-presplash.filename = %(source.dir)s/presplash.png
+# (str) Presplash da aplicação (comentado - usando presplash padrão)
+# presplash.filename = %(source.dir)s/presplash.png
 
 [buildozer]
 # (int) Log level (0 = apenas error, 1 = info, 2 = debug)
