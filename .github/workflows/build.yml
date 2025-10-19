@@ -39,10 +39,9 @@ jobs:
         rm -rf bin/
         echo "🧹 Cache completamente limpo"
 
-    - name: Build APK with Buildozer (Clean Build)
+    - name: Build APK with Buildozer (Fresh Build)
       timeout-minutes: 60
       run: |
-        buildozer android clean
         buildozer android debug
         
     - name: Upload APK artifact
