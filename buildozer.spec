@@ -12,6 +12,13 @@ package.domain = com.business.qrreader
 # (str) Source code where the main.py live
 source.dir = .
 
+# (str) Application versioning (method 1)
+version = 1.0.0
+
+# (str) Application versioning (method 2)
+# version.regex = __version__ = ['"]([^'"]*)['"]\n
+# version.filename = %(source.dir)s/main.py
+
 # (list) Source files to include (let empty to include all the files)
 source.include_exts = py,png,jpg,kv,atlas,json,txt,csv
 
@@ -23,7 +30,7 @@ version = 1.0.0
 
 # (list) Application requirements  
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy,pillow,pyzbar,numpy,plyer,requests
+requirements = python3,kivy
 
 # (str) Supported orientation (one of landscape, portrait or all)
 orientation = portrait
