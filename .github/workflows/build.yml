@@ -46,32 +46,12 @@ jobs:
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
-        name: LeitorQR-Fiscal-APK
+        name: LeitorQR-Fiscal-v1.0.${{ github.run_number }}
         path: bin/*.apk
+        retention-days: 30
         
-    - name: Create Release
-      if: github.ref == 'refs/heads/main'
-      uses: softprops/action-gh-release@v2
-      with:
-        tag_name: v1.0.${{ github.run_number }}
-        name: Leitor QR Fiscal v1.0.${{ github.run_number }}
-        files: bin/*.apk
-        body: |
-          🚀 **Leitor QR Fiscal - Versão Android**
-          
-          📱 **APK Pronto para Instalação**
-          
-          **Como Instalar:**
-          1. Baixe o arquivo APK
-          2. Ative "Fontes Desconhecidas" no Android
-          3. Instale o APK
-          4. Permita acesso à câmera
-          
-          **Funcionalidades:**
-          ✅ Leitura de QR Codes fiscais
-          ✅ Validação de chaves de acesso
-          ✅ Histórico de leituras
-          ✅ Exportação CSV
-          ✅ Interface mobile otimizada
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: List generated files
+      run: |
+        echo "📱 APK gerado com sucesso!"
+        ls -la bin/
+        echo "📥 Baixe o APK na aba 'Artifacts' desta action"
