@@ -4,10 +4,10 @@
 title = Leitor de Cupons Fiscais
 
 # (str) Package name
-package.name = qrreader
+package.name = leitorqr
 
 # (str) Package domain (needed for android/ios packaging)
-package.domain = com.business.qrreader
+package.domain = com.business.fiscal
 
 # (str) Source code where the main.py live
 source.dir = .
@@ -32,7 +32,7 @@ orientation = portrait
 fullscreen = 0
 
 # (list) Permissions
-android.permissions = CAMERA,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE,INTERNET
+android.permissions = INTERNET
 
 # (int) Target Android API, should be as high as possible.
 android.api = 30

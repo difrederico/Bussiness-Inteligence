@@ -32,15 +32,17 @@ jobs:
         pip install buildozer
         pip install kivy
 
-    - name: Clean Buildozer cache
+    - name: Clean all caches completely
       run: |
-        rm -rf ~/.buildozer/android/platform/android-ndk-r*
+        rm -rf ~/.buildozer
         rm -rf .buildozer
-        echo "Cache limpo para forçar download do NDK 25b"
+        rm -rf bin/
+        echo "🧹 Cache completamente limpo"
 
-    - name: Build APK with Buildozer (Simple Version)
+    - name: Build APK with Buildozer (Clean Build)
       timeout-minutes: 60
       run: |
+        buildozer android clean
         buildozer android debug
         
     - name: Upload APK artifact
