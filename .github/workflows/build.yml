@@ -32,6 +32,12 @@ jobs:
         pip install buildozer
         pip install kivy opencv-python pyzbar numpy
 
+    - name: Clean Buildozer cache
+      run: |
+        rm -rf ~/.buildozer/android/platform/android-ndk-r*
+        rm -rf .buildozer
+        echo "Cache limpo para forçar download do NDK 25b"
+
     - name: Build APK with Buildozer
       run: |
         chmod +x build_apk.sh
