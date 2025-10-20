@@ -1,4 +1,4 @@
-name: 🎯 BUILD DEFINITIVO APK
+name: 📱 Build APK Android
 on:
   workflow_dispatch:
     inputs:
