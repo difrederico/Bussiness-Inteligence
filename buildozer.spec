@@ -80,7 +80,7 @@ android.archs = arm64-v8a
 android.enable_androidx = True
 
 # (str) Bootstrap para usar (sdl2 é recomendado)
-android.bootstrap = sdl2
+p4a.bootstrap = sdl2
 
 # (bool) Aceitar licenças do SDK automaticamente
 android.accept_sdk_license = True

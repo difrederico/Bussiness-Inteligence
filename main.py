@@ -25,6 +25,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.switch import Switch
+from kivy.uix.screenmanager import ScreenManager, Screen, NoTransition
 from kivy.clock import Clock
 from kivy.uix.popup import Popup
 from kivy.uix.filechooser import FileChooserIconView
@@ -172,9 +173,9 @@ class CameraWidget(ModernCard):
         camera_area.size_hint_y = 0.6
         
         if CAMERA_AVAILABLE and IS_ANDROID:
-            # Câmera apenas no Android
+            # Câmera apenas no Android - INICIA PARADA
             try:
-                self.camera = Camera(play=True, resolution=(640, 480))
+                self.camera = Camera(play=False, resolution=(640, 480))  # ✅ play=False
                 camera_area.add_widget(self.camera)
             except Exception as e:
                 placeholder = Label(
@@ -204,7 +205,7 @@ class CameraWidget(ModernCard):
         
         # Botão Iniciar Câmera com tamanho touch-friendly
         self.camera_btn = Button(
-            text='📸 Iniciar',
+            text='📸 Iniciar Câmera',
             font_size=sp(16),
             background_color=COLORS['primary'],
             size_hint_x=0.5
@@ -703,154 +704,200 @@ class UploadWidget(ModernCard):
         self.add_widget(layout)
 
 
-class MainLayout(BoxLayout):
-    """Layout principal da aplicação"""
+class CameraScreen(Screen):
+    """Tela da câmera com funcionalidades de leitura"""
     
-    def __init__(self, app_instance, **kwargs):
-        super().__init__(orientation='vertical', padding=dp(0), spacing=dp(0), **kwargs)
-        self.app = app_instance
+    def __init__(self, app, **kwargs):
+        super().__init__(**kwargs)
+        self.app = app
         
-        # === CABEÇALHO ===
-        header = ModernCard(bg_color=COLORS['background'])
-        header.size_hint_y = None
-        header.height = dp(120)
+        layout = BoxLayout(orientation='vertical', padding=dp(10), spacing=dp(10))
         
-        header_layout = BoxLayout(orientation='vertical', padding=dp(20), spacing=dp(5))
+        # Widget da câmera (55% da tela)
+        camera_widget = CameraWidget(app_instance=self.app, size_hint_y=0.55)
+        layout.add_widget(camera_widget)
+        
+        # Widget de chaves salvas (45% da tela) - SEM ScrollView externa
+        saved_keys_widget = SavedKeysWidget(app_instance=self.app, size_hint_y=0.45)
+        layout.add_widget(saved_keys_widget)
+        
+        self.add_widget(layout)
+
+
+class UploadScreen(Screen):
+    """Tela de upload de arquivos"""
+    
+    def __init__(self, app, **kwargs):
+        super().__init__(**kwargs)
+        self.app = app
+        
+        layout = BoxLayout(orientation='vertical', padding=dp(10), spacing=dp(10))
+        
+        # Widget de upload (40% da tela)
+        upload_widget = UploadWidget(app_instance=self.app, size_hint_y=0.4)
+        layout.add_widget(upload_widget)
+        
+        # Widget de chaves salvas (60% da tela)
+        saved_keys_widget = SavedKeysWidget(app_instance=self.app, size_hint_y=0.6)
+        layout.add_widget(saved_keys_widget)
+        
+        self.add_widget(layout)
+
+
+class ManualScreen(Screen):
+    """Tela de entrada manual"""
+    
+    def __init__(self, app, **kwargs):
+        super().__init__(**kwargs)
+        self.app = app
+        
+        layout = BoxLayout(orientation='vertical', padding=dp(10), spacing=dp(10))
+        
+        # Widget de entrada manual (50% da tela)
+        manual_input_widget = ManualInputWidget(app_instance=self.app, size_hint_y=0.5)
+        layout.add_widget(manual_input_widget)
+        
+        # Widget de chaves salvas (50% da tela)
+        saved_keys_widget = SavedKeysWidget(app_instance=self.app, size_hint_y=0.5)
+        layout.add_widget(saved_keys_widget)
+        
+        self.add_widget(layout)
+
+
+class MainLayout(BoxLayout):
+    """Layout principal da aplicação com ScreenManager"""
+    
+    def __init__(self, app, **kwargs):
+        super().__init__(orientation='vertical', **kwargs)
+        self.app = app
+        
+        # === CABEÇALHO FIXO ===
+        header = BoxLayout(
+            size_hint_y=None, 
+            height=dp(80), 
+            padding=[dp(20), dp(10)],
+            spacing=dp(10)
+        )
         
         # Logo e título
-        title_layout = BoxLayout(orientation='horizontal', size_hint_y=0.6, spacing=dp(10))
-        
         logo = Label(
-            text='📊',
-            font_size=sp(24),
+            text='�',
+            font_size=sp(28),
             size_hint_x=None,
-            width=dp(40)
+            width=dp(50)
         )
-        title_layout.add_widget(logo)
+        header.add_widget(logo)
         
-        title_text_layout = BoxLayout(orientation='vertical')
+        title_layout = BoxLayout(orientation='vertical')
         
         main_title = Label(
             text='Mercado em Números',
-            font_size=sp(20),
-            color=COLORS['text'],
-            size_hint_y=0.6,
-            halign='left'
+            font_size=sp(22),
+            color=COLORS['primary'],
+            bold=True,
+            halign='left',
+            size_hint_y=0.6
         )
         main_title.bind(size=main_title.setter('text_size'))
-        title_text_layout.add_widget(main_title)
+        title_layout.add_widget(main_title)
         
         subtitle = Label(
-            text='Leitor de Cupons Fiscais',
+            text='Leitor de Cupons Fiscais Profissional',
             font_size=sp(14),
             color=COLORS['text_secondary'],
-            size_hint_y=0.4,
-            halign='left'
+            halign='left',
+            size_hint_y=0.4
         )
         subtitle.bind(size=subtitle.setter('text_size'))
-        title_text_layout.add_widget(subtitle)
+        title_layout.add_widget(subtitle)
         
-        title_layout.add_widget(title_text_layout)
-        header_layout.add_widget(title_layout)
-        
-        # Abas de navegação otimizadas para touch
-        tabs = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(60), spacing=dp(8))
-        
-        self.tab_camera = ToggleButton(
-            text='📷 Câmera',
-            font_size=sp(14),
-            group='main_tabs',
-            state='down',
-            background_color=COLORS['primary']
-        )
-        self.tab_camera.bind(on_press=self.switch_tab)
-        tabs.add_widget(self.tab_camera)
-        
-        self.tab_upload = ToggleButton(
-            text='📎 Arquivo',
-            font_size=sp(14),
-            group='main_tabs',
-            background_color=COLORS['text_secondary']
-        )
-        self.tab_upload.bind(on_press=self.switch_tab)
-        tabs.add_widget(self.tab_upload)
-        
-        self.tab_manual = ToggleButton(
-            text='⌨️ Manual',
-            font_size=sp(14),
-            group='main_tabs',
-            background_color=COLORS['text_secondary']
-        )
-        self.tab_manual.bind(on_press=self.switch_tab)
-        tabs.add_widget(self.tab_manual)
-        
-        header_layout.add_widget(tabs)
-        header.add_widget(header_layout)
+        header.add_widget(title_layout)
         self.add_widget(header)
         
-        # === CONTEÚDO PRINCIPAL ===
-        content_scroll = ScrollView()
-        self.content_layout = BoxLayout(orientation='vertical', padding=dp(20), spacing=dp(20), size_hint_y=None)
-        self.content_layout.bind(minimum_height=self.content_layout.setter('height'))
+        # === SCREEN MANAGER (Área central) ===
+        self.screen_manager = ScreenManager(transition=NoTransition())
         
-        # Widgets de conteúdo
-        self.camera_widget = CameraWidget(app_instance, size_hint_y=None, height=dp(450))
-        self.upload_widget = UploadWidget(app_instance, size_hint_y=None, height=dp(300))
-        self.manual_widget = ManualInputWidget(app_instance, size_hint_y=None, height=dp(350))
-        self.saved_keys_widget = SavedKeysWidget(app_instance, size_hint_y=None, height=dp(400))
+        # Criação das telas
+        self.camera_screen = CameraScreen(name='camera', app=self.app)
+        self.upload_screen = UploadScreen(name='upload', app=self.app)
+        self.manual_screen = ManualScreen(name='manual', app=self.app)
         
-        # Mostra conteúdo inicial
-        self.switch_tab(self.tab_camera)
+        # Adiciona telas ao manager
+        self.screen_manager.add_widget(self.camera_screen)
+        self.screen_manager.add_widget(self.upload_screen)
+        self.screen_manager.add_widget(self.manual_screen)
         
-        content_scroll.add_widget(self.content_layout)
-        self.add_widget(content_scroll)
+        # Define tela inicial
+        self.screen_manager.current = 'camera'
         
-        # === RODAPÉ ===
-        footer = ModernCard(bg_color=COLORS['background'])
-        footer.size_hint_y = None
-        footer.height = dp(50)
+        self.add_widget(self.screen_manager)
         
-        footer_label = Label(
-            text='Desenvolvido com foco na experiência do usuário.',
-            font_size=sp(12),
-            color=COLORS['text_secondary'],
-            halign='center'
+        # === BARRA DE ABAS FIXA NO RODAPÉ ===
+        tab_bar = BoxLayout(
+            size_hint_y=None, 
+            height=dp(70), 
+            spacing=dp(8), 
+            padding=dp(10)
         )
-        footer_label.bind(size=footer_label.setter('text_size'))
-        footer.add_widget(footer_label)
         
-        self.add_widget(footer)
+        # Botões das abas
+        self.camera_tab_button = ToggleButton(
+            text='📷 Câmera',
+            font_size=sp(16),
+            group='main_tabs',
+            state='down',  # Inicia selecionado
+            background_color=COLORS['primary']
+        )
+        self.camera_tab_button.bind(on_press=lambda x: self.change_screen('camera'))
+        tab_bar.add_widget(self.camera_tab_button)
+        
+        self.upload_tab_button = ToggleButton(
+            text='📎 Upload',
+            font_size=sp(16),
+            group='main_tabs',
+            background_color=COLORS['text_secondary']
+        )
+        self.upload_tab_button.bind(on_press=lambda x: self.change_screen('upload'))
+        tab_bar.add_widget(self.upload_tab_button)
+        
+        self.manual_tab_button = ToggleButton(
+            text='⌨️ Manual',
+            font_size=sp(16),
+            group='main_tabs',
+            background_color=COLORS['text_secondary']
+        )
+        self.manual_tab_button.bind(on_press=lambda x: self.change_screen('manual'))
+        tab_bar.add_widget(self.manual_tab_button)
+        
+        # Armazena referências dos botões para atualizar cores
+        self.tab_buttons = {
+            'camera': self.camera_tab_button,
+            'upload': self.upload_tab_button,
+            'manual': self.manual_tab_button
+        }
+        
+        self.add_widget(tab_bar)
     
-    def switch_tab(self, instance):
-        """Alterna entre abas"""
-        # Limpa conteúdo atual
-        self.content_layout.clear_widgets()
+    def change_screen(self, screen_name):
+        """Muda a tela atual e atualiza cores dos botões"""
+        self.screen_manager.current = screen_name
         
-        # Atualiza cores das abas
-        self.tab_camera.background_color = COLORS['text_secondary']
-        self.tab_upload.background_color = COLORS['text_secondary']
-        self.tab_manual.background_color = COLORS['text_secondary']
-        
-        if instance == self.tab_camera:
-            instance.background_color = COLORS['primary']
-            self.content_layout.add_widget(self.camera_widget)
-            self.content_layout.add_widget(self.saved_keys_widget)
-        elif instance == self.tab_upload:
-            instance.background_color = COLORS['primary']
-            self.content_layout.add_widget(self.upload_widget)
-            self.content_layout.add_widget(self.saved_keys_widget)
-        elif instance == self.tab_manual:
-            instance.background_color = COLORS['primary']
-            self.content_layout.add_widget(self.manual_widget)
-            self.content_layout.add_widget(self.saved_keys_widget)
+        # Atualiza cores dos botões
+        for name, button in self.tab_buttons.items():
+            if name == screen_name:
+                button.background_color = COLORS['primary']
+            else:
+                button.background_color = COLORS['text_secondary']
 
 
 class MercadoEmNumerosApp(App):
     """Aplicativo principal - Mercado em Números"""
     
     def build(self):
-        """Constrói a interface principal usando MainLayout"""
+        """Constrói a interface principal usando ScreenManager"""
         self.title = 'Mercado em Números - Leitor de Cupons Fiscais'
+        
+        # Inicialização das variáveis de estado
         self.saved_keys = []
         self.rapid_mode = False
         self.current_search = ""
@@ -858,19 +905,13 @@ class MercadoEmNumerosApp(App):
         # Carrega dados salvos
         self.load_saved_keys()
         
-        # Cria e retorna o layout principal
-        self.main_layout = MainLayout(self)
+        # Cria e retorna o layout principal com ScreenManager
+        main_layout = MainLayout(app=self)
         
-        # Faz referência aos widgets para compatibilidade
-        self.saved_keys_widget = self.main_layout.saved_keys_widget
-        self.camera_widget = self.main_layout.camera_widget
-        self.upload_widget = self.main_layout.upload_widget
-        self.manual_widget = self.main_layout.manual_widget
+        # Atualiza lista inicial após um pequeno delay
+        Clock.schedule_once(lambda dt: self.update_keys_display(), 0.2)
         
-        # Atualiza lista inicial
-        Clock.schedule_once(lambda dt: self.update_keys_display(), 0.1)
-        
-        return self.main_layout
+        return main_layout
     
     def validate_access_key(self, key):
         """Valida chave de acesso brasileira"""
@@ -1070,8 +1111,29 @@ class MercadoEmNumerosApp(App):
         self.update_keys_display()
     
     def update_keys_display(self):
-        """Atualiza exibição das chaves"""
-        self.saved_keys_widget.update_keys_list(self.saved_keys, self.current_search)
+        """Atualiza exibição das chaves em todas as telas"""
+        # Atualiza o widget de chaves salvas em cada tela que possui um
+        try:
+            # Procura por widgets SavedKeysWidget em todas as telas
+            root = self.root
+            if hasattr(root, 'screen_manager'):
+                for screen in root.screen_manager.screens:
+                    for child in self._find_saved_keys_widgets(screen):
+                        child.update_keys_list(self.saved_keys, self.current_search)
+        except Exception as e:
+            print(f"Erro ao atualizar display: {e}")
+    
+    def _find_saved_keys_widgets(self, widget):
+        """Encontra widgets SavedKeysWidget recursivamente"""
+        widgets = []
+        if isinstance(widget, SavedKeysWidget):
+            widgets.append(widget)
+        
+        if hasattr(widget, 'children'):
+            for child in widget.children:
+                widgets.extend(self._find_saved_keys_widgets(child))
+        
+        return widgets
     
     def copy_key(self, key_obj):
         """Copia chave para clipboard"""
