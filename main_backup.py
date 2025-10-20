@@ -87,14 +87,14 @@ try:
 except ImportError:
     print("⚠️ Numpy não disponível")
 
-# Kivy Camera - REMOVIDO, agora usando câmera nativa Android
-# try:
-#     from kivy.uix.camera import Camera
-#     CAMERA_AVAILABLE = True
-#     print("✅ Kivy Camera disponível")
-# except ImportError:
-CAMERA_AVAILABLE = False  # Sempre False - usando câmera nativa
-print("📱 Usando câmera nativa Android via Intent")
+# Kivy Camera
+try:
+    from kivy.uix.camera import Camera
+    CAMERA_AVAILABLE = True
+    print("✅ Kivy Camera disponível")
+except ImportError:
+    CAMERA_AVAILABLE = False
+    print("❌ Kivy Camera não disponível")
 
 # Cores do sistema (baseado na imagem)
 COLORS = {
@@ -198,6 +198,18 @@ class CameraWidget(ModernCard):
         )
         placeholder.bind(size=placeholder.setter('text_size'))
         camera_area.add_widget(placeholder)
+        else:
+            # Placeholder no desktop ou quando câmera indisponível
+            message = '�️ Desktop Mode\n\n📱 Câmera funciona no Android\n\n⌨️ Use Entrada Manual para testes'
+            placeholder = Label(
+                text=message,
+                font_size=sp(14),
+                color=COLORS['text_secondary'],
+                halign='center'
+            )
+            placeholder.bind(size=placeholder.setter('text_size'))
+            camera_area.add_widget(placeholder)
+        
         layout.add_widget(camera_area)
         
         # Controles da câmera otimizados para touch
@@ -253,7 +265,21 @@ class CameraWidget(ModernCard):
         if CV2_AVAILABLE and PYZBAR_AVAILABLE and CAMERA_AVAILABLE:
             Clock.schedule_interval(self.scan_frame, 1.0)
     
-    # toggle_camera removido - agora usa câmera nativa Android via abrir_camera_nativa()
+    def toggle_camera(self, instance):
+        """Liga/desliga câmera"""
+        if CAMERA_AVAILABLE and self.camera:
+            if self.is_scanning:
+                self.camera.play = False
+                self.is_scanning = False
+                self.camera_btn.text = 'Iniciar Câmera'
+                self.camera_btn.background_color = COLORS['primary']
+            else:
+                self.camera.play = True
+                self.is_scanning = True
+                self.camera_btn.text = 'Parar Câmera'
+                self.camera_btn.background_color = COLORS['error']
+        else:
+            self.app_instance.show_message('Câmera não disponível neste dispositivo', 'Aviso')
     
     def toggle_rapid_mode(self, instance, value):
         """Liga/desliga modo rápido"""
@@ -681,7 +707,7 @@ class UploadWidget(ModernCard):
             background_color=COLORS['primary'],
             size_hint_y=0.2
         )
-        upload_btn.bind(on_press=self.app_instance.abrir_galeria_nativa)
+        upload_btn.bind(on_press=self.app_instance.upload_image)
         upload_layout.add_widget(upload_btn)
         
         upload_area.add_widget(upload_layout)

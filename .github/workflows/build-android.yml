@@ -1,0 +1,135 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Java JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'adopt'
+        
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Cache buildozer dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.buildozer
+        key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
+        restore-keys: |
+          ${{ runner.os }}-buildozer-
+          
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          git \
+          python3 \
+          python3-dev \
+          ffmpeg \
+          libsdl2-dev \
+          libsdl2-image-dev \
+          libsdl2-mixer-dev \
+          libsdl2-ttf-dev \
+          libportmidi-dev \
+          libswscale-dev \
+          libavformat-dev \
+          libavcodec-dev \
+          zlib1g-dev \
+          libgstreamer1.0 \
+          gstreamer1.0-plugins-base \
+          gstreamer1.0-plugins-good \
+          openjdk-8-jdk \
+          unzip
+          
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install buildozer
+        pip install kivy[base]
+        pip install python-for-android
+        
+    - name: Setup Android SDK
+      run: |
+        mkdir -p ~/.buildozer/android
+        cd ~/.buildozer/android
+        
+        # Download Android SDK
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
+        unzip -q commandlinetools-linux-8512546_latest.zip
+        mv cmdline-tools latest
+        mkdir -p sdk/cmdline-tools
+        mv latest sdk/cmdline-tools/
+        
+        # Set up SDK paths
+        export ANDROID_HOME=~/.buildozer/android/sdk
+        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
+        
+        # Accept licenses
+        yes | sdkmanager --licenses || true
+        
+        # Install required SDK components
+        sdkmanager "platforms;android-30"
+        sdkmanager "build-tools;30.0.3"
+        sdkmanager "platform-tools"
+        
+    - name: Build APK
+      run: |
+        export ANDROID_HOME=~/.buildozer/android/sdk
+        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+        buildozer android debug
+        
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-debug-apk
+        path: bin/*.apk
+        
+    - name: Upload APK as Release Asset
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: "v2.2-android-fix"
+        name: "Android APK v2.2 - Camera/Upload Fixed"
+        body: |
+          🚀 **APK Corrigido com Funcionalidades Nativas**
+          
+          ✅ **Correções Implementadas:**
+          - ✅ Sistema de permissões Android nativo
+          - ✅ Câmera usando Intent nativo (substituindo Kivy Camera)
+          - ✅ Galeria usando Intent nativo (substituindo FileChooser)
+          - ✅ Mensagens de toast implementadas
+          - ✅ Sintaxe Python validada
+          
+          📱 **Para Instalar:**
+          1. Faça download do arquivo APK
+          2. Habilite "Fontes desconhecidas" nas configurações Android
+          3. Instale o APK
+          4. Teste câmera e upload - devem funcionar 100%
+          
+          🔧 **Mudanças Técnicas:**
+          - Substituição completa Kivy → Android nativo
+          - Implementação de `on_start()` com `request_permissions`
+          - Métodos `abrir_camera_nativa()` e `abrir_galeria_nativa()`
+          - Remoção de `kivy.uix.camera` (problemático no Android)
+        files: bin/*.apk
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
