@@ -95,19 +95,19 @@ jobs:
         # Remove arquivos existentes
         rm -f main.py buildozer.spec
         
-        # Usa os arquivos definitivos
+        # Usa os arquivos definitivos e limpos
         cp main_final.py main.py
-        cp buildozer_definitivo.spec buildozer.spec
+        cp buildozer_limpo.spec buildozer.spec
         
         # Remove arquivos desnecessários
-        rm -f main_final.py buildozer_definitivo.spec
+        rm -f main_final.py buildozer_definitivo.spec buildozer_limpo.spec
         
         # Lista final
         echo "📁 Estrutura final:"
         ls -la *.py *.spec
         
         echo "📋 Conteúdo buildozer.spec:"
-        head -20 buildozer.spec
+        cat buildozer.spec
     
     - name: 🐍 Python 3.10 Setup
       uses: actions/setup-python@v5
