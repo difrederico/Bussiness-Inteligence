@@ -1,0 +1,232 @@
+name: Build Android APK - Definitivo
+on:
+  workflow_dispatch:
+    inputs:
+      force_clean:
+        description: 'Força limpeza completa'
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04  # Volta para 20.04 - mais estável para buildozer
+    timeout-minutes: 90
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+        path: repo
+    
+    - name: 🧹 Aggressive Cleanup
+      run: |
+        echo "=== Limpeza inicial ==="
+        df -h
+        
+        # Remove NDK conflitantes
+        sudo rm -rf /usr/local/lib/android/sdk/ndk/*
+        sudo rm -rf /usr/local/lib/android/sdk
+        
+        # Remove Python conflitantes
+        sudo rm -rf /opt/hostedtoolcache/Python/3.11*
+        sudo rm -rf /opt/hostedtoolcache/Python/3.9*
+        sudo rm -rf /opt/hostedtoolcache/Python/3.8*
+        
+        # Remove outros pacotes desnecessários
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /usr/local/share/boost
+        sudo rm -rf /opt/hostedtoolcache/go
+        sudo rm -rf /opt/hostedtoolcache/node
+        
+        echo "=== Após limpeza ==="
+        df -h
+    
+    - name: 🐍 Setup Python 3.10 EXATO
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10.12'  # Versão exata testada
+    
+    - name: ☕ Setup Java 8 (Compatível com buildozer antigo)
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'  # Java 8 é mais compatível
+    
+    - name: 📦 Install System Dependencies (Ubuntu 20.04)
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq \
+          git zip unzip wget curl \
+          build-essential \
+          autoconf libtool \
+          pkg-config \
+          zlib1g-dev \
+          libffi-dev \
+          libssl-dev \
+          python3-dev \
+          openjdk-8-jdk
+        
+        # Verifica versões
+        python3 --version
+        java -version
+    
+    - name: 🔧 Setup Environment (Limpo)
+      run: |
+        # Java
+        echo "JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64" >> $GITHUB_ENV
+        
+        # Remove variáveis conflitantes
+        unset ANDROID_HOME
+        unset ANDROID_SDK_ROOT
+        unset ANDROID_NDK_HOME
+        unset ANDROID_NDK_ROOT
+        unset ANDROIDNDK
+        unset ANDROIDSDK
+        
+        # Buildozer vai configurar tudo automaticamente
+        echo "BUILDOZER_AUTO_ACCEPT_ANDROID_SDK_LICENSE=1" >> $GITHUB_ENV
+    
+    - name: 🐍 Install Python Dependencies (Versões testadas)
+      run: |
+        python3 -m pip install --upgrade pip==23.3.1
+        pip install setuptools==68.2.2
+        pip install wheel==0.41.2
+        pip install cython==0.29.36
+        pip install buildozer==1.4.0  # Versão mais estável
+        
+        # Dependências específicas
+        pip install colorama==0.4.6
+        pip install appdirs==1.4.4
+        pip install sh==1.14.3
+        pip install jinja2==3.1.2
+        
+        echo "=== Verificação ==="
+        buildozer --version
+        python3 --version
+    
+    - name: 📋 Prepare Minimal Configuration
+      run: |
+        cd repo
+        
+        # Cria configuração ULTRA-MINIMAL testada
+        cat > buildozer.spec << 'EOF'
+        [app]
+        title = Leitor de Cupons Fiscais
+        package.name = leitorqrfiscal
+        package.domain = com.business
+        source.main = main.py
+        source.dir = .
+        source.include_exts = py,png,jpg,kv,atlas,json
+        version = 2.1
+        
+        # REQUIREMENTS MÍNIMOS - SÓ O ESSENCIAL
+        requirements = python3,kivy==2.1.0,pillow
+        
+        # ANDROID CONFIG CONSERVADOR
+        android.minapi = 21
+        android.api = 28
+        android.ndk = 21b
+        
+        # BÁSICO
+        orientation = portrait
+        fullscreen = 0
+        android.permissions = INTERNET,CAMERA,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
+        android.archs = armeabi-v7a
+        p4a.bootstrap = sdl2
+        android.accept_sdk_license = True
+        
+        [buildozer]
+        log_level = 2
+        warn_on_root = 1
+        EOF
+        
+        echo "=== CONFIGURAÇÃO FINAL ==="
+        cat buildozer.spec
+    
+    - name: 🧼 Clean Everything
+      run: |
+        cd repo
+        
+        # Remove qualquer cache/build anterior
+        rm -rf .buildozer
+        rm -rf bin
+        rm -rf dist
+        
+        # Limpa Python cache
+        find . -name "*.pyc" -delete
+        find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+    
+    - name: 🔨 Build APK (Single attempt with conservative settings)
+      timeout-minutes: 75
+      run: |
+        cd repo
+        
+        echo "🚀 BUILD APK - CONFIGURAÇÃO CONSERVADORA"
+        
+        # Configurações ultra-conservadoras
+        export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+        export GRADLE_OPTS="-Xmx1g -Dorg.gradle.daemon=false"
+        
+        # Build único com timeout
+        timeout 4500s bash -c 'yes | buildozer android debug' || {
+          echo "❌ Build falhou, mostrando logs..."
+          
+          # Mostra logs importantes
+          echo "=== BUILDOZER LOG ==="
+          find .buildozer -name "*.log" -exec echo "FILE: {}" \; -exec tail -100 {} \; 2>/dev/null || true
+          
+          echo "=== PYTHON FOR ANDROID LOG ==="
+          find .buildozer -path "*/logs/*" -name "*.log" -exec echo "FILE: {}" \; -exec tail -50 {} \; 2>/dev/null || true
+          
+          exit 1
+        }
+    
+    - name: 🔍 Find and Package APK
+      run: |
+        cd repo
+        
+        echo "=== PROCURANDO APK ==="
+        find . -name "*.apk" -type f -ls
+        
+        mkdir -p dist
+        
+        APK_FILE=$(find . -name "*.apk" -type f | head -1)
+        if [ -n "$APK_FILE" ]; then
+          echo "✅ APK encontrado: $APK_FILE"
+          
+          # Info do APK
+          ls -lh "$APK_FILE"
+          file "$APK_FILE"
+          
+          # Copia para dist
+          cp "$APK_FILE" "dist/MercadoEmNumeros-minimal-$(date +%Y%m%d).apk"
+          
+          echo "🎉 APK PRONTO!"
+          ls -lh dist/
+        else
+          echo "❌ APK não encontrado"
+          exit 1
+        fi
+    
+    - name: 📤 Upload APK
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-apk-definitivo-${{ github.run_number }}
+        path: repo/dist/*.apk
+        retention-days: 30
+        if-no-files-found: error
+    
+    - name: 📤 Upload Debug Logs
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-logs-${{ github.run_number }}
+        path: |
+          repo/.buildozer/**/*.log
+          repo/buildozer.spec
+        retention-days: 7
+        if-no-files-found: warn
