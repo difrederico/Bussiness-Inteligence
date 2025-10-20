@@ -41,21 +41,47 @@ import threading
 import platform
 from datetime import datetime
 
-# Verificação de dependências (Android-compatible apenas)
-# Nota: OpenCV, pyzbar e numpy não são compatíveis com python-for-android
-# O app funciona perfeitamente sem essas dependências para funcionalidades básicas
-
-CV2_AVAILABLE = False  # OpenCV não suportado no build Android
-PYZBAR_AVAILABLE = False  # pyzbar não suportado no build Android
+# Detecção inteligente de dependências disponíveis
+# Tenta importar cada biblioteca e define disponibilidade automaticamente
 
 # Detecção de plataforma
 IS_ANDROID = hasattr(platform, 'android') or 'ANDROID_ROOT' in os.environ
 
+# Tenta importar OpenCV
+CV2_AVAILABLE = False
+try:
+    import cv2
+    CV2_AVAILABLE = True
+    print("✅ OpenCV disponível")
+except ImportError:
+    print("⚠️ OpenCV não disponível - usando fallback")
+
+# Tenta importar pyzbar
+PYZBAR_AVAILABLE = False
+try:
+    from pyzbar import pyzbar
+    PYZBAR_AVAILABLE = True
+    print("✅ Pyzbar disponível")
+except ImportError:
+    print("⚠️ Pyzbar não disponível - usando entrada manual")
+
+# Tenta importar numpy
+NUMPY_AVAILABLE = False
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+    print("✅ Numpy disponível")
+except ImportError:
+    print("⚠️ Numpy não disponível")
+
+# Kivy Camera
 try:
     from kivy.uix.camera import Camera
     CAMERA_AVAILABLE = True
+    print("✅ Kivy Camera disponível")
 except ImportError:
     CAMERA_AVAILABLE = False
+    print("❌ Kivy Camera não disponível")
 
 # Cores do sistema (baseado na imagem)
 COLORS = {
@@ -677,20 +703,12 @@ class UploadWidget(ModernCard):
         self.add_widget(layout)
 
 
-class MercadoEmNumerosApp(App):
-    """Aplicativo principal - Mercado em Números"""
+class MainLayout(BoxLayout):
+    """Layout principal da aplicação"""
     
-    def build(self):
-        self.title = 'Mercado em Números - Leitor de Cupons Fiscais'
-        self.saved_keys = []
-        self.rapid_mode = False
-        self.current_search = ""
-        
-        # Carrega dados salvos
-        self.load_saved_keys()
-        
-        # Layout principal
-        main_layout = BoxLayout(orientation='vertical', padding=dp(0), spacing=dp(0))
+    def __init__(self, app_instance, **kwargs):
+        super().__init__(orientation='vertical', padding=dp(0), spacing=dp(0), **kwargs)
+        self.app = app_instance
         
         # === CABEÇALHO ===
         header = ModernCard(bg_color=COLORS['background'])
@@ -768,7 +786,7 @@ class MercadoEmNumerosApp(App):
         
         header_layout.add_widget(tabs)
         header.add_widget(header_layout)
-        main_layout.add_widget(header)
+        self.add_widget(header)
         
         # === CONTEÚDO PRINCIPAL ===
         content_scroll = ScrollView()
@@ -776,16 +794,16 @@ class MercadoEmNumerosApp(App):
         self.content_layout.bind(minimum_height=self.content_layout.setter('height'))
         
         # Widgets de conteúdo
-        self.camera_widget = CameraWidget(self, size_hint_y=None, height=dp(450))
-        self.upload_widget = UploadWidget(self, size_hint_y=None, height=dp(300))
-        self.manual_widget = ManualInputWidget(self, size_hint_y=None, height=dp(350))
-        self.saved_keys_widget = SavedKeysWidget(self, size_hint_y=None, height=dp(400))
+        self.camera_widget = CameraWidget(app_instance, size_hint_y=None, height=dp(450))
+        self.upload_widget = UploadWidget(app_instance, size_hint_y=None, height=dp(300))
+        self.manual_widget = ManualInputWidget(app_instance, size_hint_y=None, height=dp(350))
+        self.saved_keys_widget = SavedKeysWidget(app_instance, size_hint_y=None, height=dp(400))
         
         # Mostra conteúdo inicial
         self.switch_tab(self.tab_camera)
         
         content_scroll.add_widget(self.content_layout)
-        main_layout.add_widget(content_scroll)
+        self.add_widget(content_scroll)
         
         # === RODAPÉ ===
         footer = ModernCard(bg_color=COLORS['background'])
@@ -801,12 +819,7 @@ class MercadoEmNumerosApp(App):
         footer_label.bind(size=footer_label.setter('text_size'))
         footer.add_widget(footer_label)
         
-        main_layout.add_widget(footer)
-        
-        # Atualiza lista inicial
-        self.update_keys_display()
-        
-        return main_layout
+        self.add_widget(footer)
     
     def switch_tab(self, instance):
         """Alterna entre abas"""
@@ -816,17 +829,48 @@ class MercadoEmNumerosApp(App):
         # Atualiza cores das abas
         self.tab_camera.background_color = COLORS['text_secondary']
         self.tab_upload.background_color = COLORS['text_secondary']
+        self.tab_manual.background_color = COLORS['text_secondary']
         
         if instance == self.tab_camera:
-            # Aba da câmera
             instance.background_color = COLORS['primary']
             self.content_layout.add_widget(self.camera_widget)
             self.content_layout.add_widget(self.saved_keys_widget)
-        else:
-            # Aba de upload
+        elif instance == self.tab_upload:
             instance.background_color = COLORS['primary']
             self.content_layout.add_widget(self.upload_widget)
             self.content_layout.add_widget(self.saved_keys_widget)
+        elif instance == self.tab_manual:
+            instance.background_color = COLORS['primary']
+            self.content_layout.add_widget(self.manual_widget)
+            self.content_layout.add_widget(self.saved_keys_widget)
+
+
+class MercadoEmNumerosApp(App):
+    """Aplicativo principal - Mercado em Números"""
+    
+    def build(self):
+        """Constrói a interface principal usando MainLayout"""
+        self.title = 'Mercado em Números - Leitor de Cupons Fiscais'
+        self.saved_keys = []
+        self.rapid_mode = False
+        self.current_search = ""
+        
+        # Carrega dados salvos
+        self.load_saved_keys()
+        
+        # Cria e retorna o layout principal
+        self.main_layout = MainLayout(self)
+        
+        # Faz referência aos widgets para compatibilidade
+        self.saved_keys_widget = self.main_layout.saved_keys_widget
+        self.camera_widget = self.main_layout.camera_widget
+        self.upload_widget = self.main_layout.upload_widget
+        self.manual_widget = self.main_layout.manual_widget
+        
+        # Atualiza lista inicial
+        Clock.schedule_once(lambda dt: self.update_keys_display(), 0.1)
+        
+        return self.main_layout
     
     def validate_access_key(self, key):
         """Valida chave de acesso brasileira"""
@@ -890,13 +934,76 @@ class MercadoEmNumerosApp(App):
         
         self.update_keys_display()
     
+    def process_image_with_cv2(self, image_path):
+        """Processa imagem com OpenCV e pyzbar quando disponíveis"""
+        if not CV2_AVAILABLE or not PYZBAR_AVAILABLE:
+            return False
+        
+        try:
+            import cv2
+            from pyzbar import pyzbar
+            
+            # Carrega e processa a imagem
+            image = cv2.imread(image_path)
+            if image is None:
+                self.show_message("❌ Erro ao carregar imagem", "Erro")
+                return False
+            
+            # Decodifica QR codes
+            qr_codes = pyzbar.decode(image)
+            
+            if not qr_codes:
+                self.show_message("❌ Nenhum QR Code encontrado na imagem", "Resultado")
+                return False
+            
+            # Processa cada QR code encontrado
+            for qr_code in qr_codes:
+                qr_data = qr_code.data.decode('utf-8')
+                
+                # Extrai chave fiscal do QR code
+                if len(qr_data) == 44 and qr_data.isdigit():
+                    key = qr_data
+                elif 'chNFe=' in qr_data:
+                    # Extrai chave do formato URL
+                    key = qr_data.split('chNFe=')[1].split('&')[0]
+                else:
+                    continue
+                
+                # Valida e salva a chave
+                if self.validate_access_key(key):
+                    if not any(item.key == key for item in self.saved_keys):
+                        new_key = SavedKey(key)
+                        self.saved_keys.insert(0, new_key)
+                        self.save_keys_to_file()
+                        self.update_keys_display()
+                        self.show_message(f"✅ Chave fiscal extraída e salva com sucesso!\n\nChave: {key[:10]}...{key[-10:]}", "Sucesso")
+                        return True
+                    else:
+                        self.show_message("⚠️ Esta chave já foi salva anteriormente", "Duplicada")
+                        return True
+                else:
+                    self.show_message(f"❌ Chave fiscal inválida encontrada no QR Code", "Erro")
+            
+            return False
+            
+        except Exception as e:
+            self.show_message(f"❌ Erro ao processar imagem: {str(e)}", "Erro")
+            return False
+    
     def upload_image(self, instance):
         """Upload de imagem para processamento"""
         if not CV2_AVAILABLE or not PYZBAR_AVAILABLE:
-            self.show_message(
-                '📱 Funcionalidade em Desenvolvimento!\n\nO processamento avançado de imagens será implementado em uma versão futura.\n\n✅ Use a validação manual de chaves que funciona perfeitamente!',
-                'Em Desenvolvimento'
-            )
+            # Mensagem mais informativa sobre dependências
+            deps_status = f"""
+� Status das Dependências:
+• OpenCV: {'✅ Disponível' if CV2_AVAILABLE else '❌ Não encontrado'}
+• Pyzbar: {'✅ Disponível' if PYZBAR_AVAILABLE else '❌ Não encontrado'}
+
+💡 Solução: Use "⌨️ Entrada Manual" que funciona 100%!
+
+📱 Nas próximas versões do APK, estas dependências estarão incluídas.
+"""
+            self.show_message(deps_status, 'Dependências de Visão Computacional')
             return
         
         # Layout do seletor
@@ -945,30 +1052,17 @@ class MercadoEmNumerosApp(App):
     def process_selected_image(self, selection, popup):
         """Processa imagem selecionada"""
         if not selection:
-            self.show_toast('Selecione um arquivo', 'warning')
+            self.show_message('❌ Selecione um arquivo', 'Erro')
             return
         
         popup.dismiss()
         
-        try:
-            import cv2
-            from pyzbar import pyzbar
-            
-            image = cv2.imread(selection[0])
-            if image is None:
-                self.show_toast('Erro ao carregar imagem', 'error')
-                return
-            
-            qr_codes = pyzbar.decode(image)
-            
-            if qr_codes:
-                data = qr_codes[0].data.decode('utf-8')
-                self.process_qr_data(data)
-            else:
-                self.show_toast('Nenhum QR Code encontrado na imagem', 'warning')
-                
-        except Exception as e:
-            self.show_toast(f'Erro ao processar: {str(e)}', 'error')
+        # Usa o novo método inteligente de processamento
+        file_path = selection[0]
+        success = self.process_image_with_cv2(file_path)
+        
+        if not success and not CV2_AVAILABLE:
+            self.show_message('⚠️ Dependências de visão computacional não disponíveis\n\n✅ Use "Entrada Manual" como alternativa', 'Aviso')
     
     def on_search_change(self, instance, text):
         """Atualiza busca em tempo real"""

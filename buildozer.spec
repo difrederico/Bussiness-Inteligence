@@ -20,19 +20,21 @@ source.include_exts = py,png,jpg,kv,atlas,json
 # (str) Versão da aplicação
 version = 2.1
 
-# (list) Requisitos da aplicação (apenas compatíveis com Android)
-requirements = python3,kivy==2.3.0,pyjnius,android
+# (list) Requisitos da aplicação (tentativa com visão computacional)
+# VERSÃO EXPERIMENTAL: Tentativa de incluir OpenCV e dependências
+requirements = python3,kivy==2.3.0,pillow,opencv,numpy,pyjnius,android
 
 # (str) Requisitos garden (extensões Kivy)
 garden_requirements = 
 
-# (str) Bibliotecas removidas (não compatíveis com python-for-android):
-# ❌ opencv-python: Não suportado nativamente no Android via p4a
-# ❌ pyzbar: Dependência C++ complexa não suportada
-# ❌ numpy: Problemas de compilação para ARM64
-# ❌ pillow: Conflitos com dependências nativas
+# 🧪 TENTATIVA EXPERIMENTAL:
+# ✅ pillow: Recipe disponível no p4a
+# ⚠️ opencv: Recipe experimental (pode falhar)
+# ⚠️ numpy: Versão p4a (pode ter limitações)
+# ❌ pyzbar: Removido (sem recipe estável)
 
-# ✅ App funciona perfeitamente sem essas dependências
+# 🔄 FALLBACK: Se build falhar, código detecta automaticamente
+# e usa apenas entrada manual (100% funcional)
 # Interface moderna e validação de chaves fiscais funcionam completamente
 
 # (str) Versões suportadas do Python (padrão: 3.8,3.9,3.10,3.11)
