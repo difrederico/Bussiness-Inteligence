@@ -66,11 +66,9 @@ android.ndk_path =
 # (str) Diretório do Android SDK (auto detect)
 android.sdk_path = 
 
-# (list) Padrões para ignorar durante packaging
-source.exclude_dirs = tests, bin, venv, __pycache__
-
-# (list) Padrões de arquivos para excluir
-source.exclude_patterns = license,images/*/*.jpg
+# (list) Padrões de arquivos adicionais para excluir - Complementa configuração anterior
+# source.exclude_dirs já definido acima
+# source.exclude_patterns já definido acima
 
 # (str) Orientação da aplicação (landscape, portrait ou all)
 orientation = portrait
