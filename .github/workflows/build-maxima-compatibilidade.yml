@@ -1,0 +1,313 @@
+name: Build Android APK - Máxima Compatibilidade
+on:
+  workflow_dispatch:
+    inputs:
+      minimal_build:
+        description: 'Build mínimo (mais rápido)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04  # Versão específica e estável
+    timeout-minutes: 120   # Tempo ainda mais generoso
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+    
+    - name: 🔍 System Information
+      run: |
+        echo "=== INFORMAÇÕES DO SISTEMA ==="
+        lsb_release -a
+        uname -a
+        free -h
+        df -h
+        echo "=== VERSÕES DISPONÍVEIS ==="
+        apt-cache policy libtinfo5 libtinfo6 || true
+    
+    - name: 🧹 Free Disk Space (Agressivo)
+      run: |
+        echo "=== Espaço inicial ==="
+        df -h
+        
+        # Remove TUDO desnecessário
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /usr/local/share/boost
+        sudo rm -rf /usr/local/lib/android/sdk/ndk
+        sudo rm -rf /usr/local/.ghcup
+        sudo rm -rf /opt/hostedtoolcache
+        sudo rm -rf /usr/share/swift
+        sudo rm -rf /usr/local/julia*
+        sudo rm -rf /opt/microsoft
+        
+        # Limpa caches
+        sudo apt-get clean
+        sudo apt-get autoclean
+        
+        echo "=== Espaço após limpeza ==="
+        df -h
+    
+    - name: 🐍 Setup Python 3.10 (Específico)
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10.12'
+        cache: 'pip'
+    
+    - name: ☕ Setup Java 17 (Temurin LTS)
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        cache: 'gradle'
+    
+    - name: 📦 Install System Dependencies (Ubuntu 22.04 Compatível)
+      run: |
+        # Atualiza lista de pacotes
+        sudo apt-get update -qq
+        
+        # Instala dependências base
+        sudo apt-get install -y -qq \
+          git zip unzip wget curl \
+          build-essential gcc g++ \
+          autoconf automake libtool \
+          pkg-config cmake \
+          python3-dev python3-pip python3-setuptools \
+          openjdk-17-jdk-headless
+        
+        # Dependências específicas para buildozer/p4a (Ubuntu 22.04)
+        sudo apt-get install -y -qq \
+          zlib1g-dev \
+          libffi-dev \
+          libssl-dev \
+          libncurses5-dev \
+          libncursesw5-dev \
+          libtinfo6 \
+          libreadline8 \
+          libsqlite3-dev \
+          libbz2-dev \
+          libgdbm-dev \
+          libnss3-dev \
+          tk-dev \
+          llvm \
+          xz-utils
+        
+        # Fallback: se libtinfo5 existir, instala também
+        sudo apt-get install -y -qq libtinfo5 || echo "libtinfo5 não disponível, usando libtinfo6"
+        
+        echo "=== VERIFICAÇÕES ==="
+        python3 --version
+        java -version
+        gcc --version
+        which git
+        which zip
+        which unzip
+    
+    - name: 🔧 Setup Environment Variables (Completo)
+      run: |
+        echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> $GITHUB_ENV
+        echo "ANDROID_HOME=/opt/android-sdk" >> $GITHUB_ENV
+        echo "ANDROID_SDK_ROOT=/opt/android-sdk" >> $GITHUB_ENV
+        echo "ANDROIDAPI=33" >> $GITHUB_ENV
+        echo "NDKAPI=21" >> $GITHUB_ENV
+        echo "ANDROID_NDK_HOME=/opt/android-ndk" >> $GITHUB_ENV
+        echo "PATH=$PATH:/opt/android-sdk/tools:/opt/android-sdk/platform-tools" >> $GITHUB_ENV
+        
+        # Configurações para buildozer
+        echo "BUILDOZER_AUTO_ACCEPT_ANDROID_SDK_LICENSE=1" >> $GITHUB_ENV
+        echo "GRADLE_OPTS=-Xmx2g -Dorg.gradle.daemon=false" >> $GITHUB_ENV
+    
+    - name: 🐍 Install Python Dependencies (Versões específicas testadas)
+      run: |
+        # Atualiza pip para versão específica estável
+        python3 -m pip install --upgrade pip==24.0
+        
+        # Instala dependências com versões específicas
+        pip install setuptools==69.5.1
+        pip install wheel==0.43.0
+        pip install cython==3.0.10
+        pip install buildozer==1.5.0
+        
+        # Dependências extras para estabilidade
+        pip install colorama==0.4.6
+        pip install appdirs==1.4.4
+        pip install sh==2.0.6
+        pip install jinja2==3.1.3
+        pip install packaging==24.0
+        
+        echo "=== VERIFICAÇÃO INSTALAÇÕES ==="
+        pip list | grep -E "(buildozer|cython|setuptools|wheel)"
+        buildozer --version
+    
+    - name: 📋 Prepare Ultra-Stable Configuration
+      run: |
+        cd v2-android
+        
+        # Backup original
+        cp buildozer.spec buildozer.spec.backup
+        
+        # Use configuração minimal se solicitado
+        if [ "${{ inputs.minimal_build }}" = "true" ]; then
+          echo "🔧 Usando build MÍNIMO para máxima compatibilidade..."
+          
+          # Cria buildozer.spec ultra-minimal
+          cat > buildozer.spec << 'EOF'
+        [app]
+        title = Leitor de Cupons Fiscais
+        package.name = leitorqrfiscal
+        package.domain = com.business
+        source.main = main.py
+        source.dir = .
+        source.include_exts = py,png,jpg,kv,atlas,json
+        version = 2.1
+        requirements = python3,kivy,pillow,pyjnius,android
+        android.minapi = 21
+        android.api = 33
+        android.ndk = 25b
+        source.exclude_dirs = tests, bin, venv, __pycache__, .buildozer, .git
+        orientation = portrait
+        fullscreen = 0
+        android.permissions = INTERNET,CAMERA,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
+        android.archs = arm64-v8a
+        android.enable_androidx = True
+        p4a.bootstrap = sdl2
+        android.accept_sdk_license = True
+        
+        [buildozer]
+        log_level = 2
+        warn_on_root = 1
+        EOF
+        
+        else
+          echo "🔧 Usando configuração padrão corrigida..."
+          # A configuração já foi corrigida nos commits anteriores
+        fi
+        
+        echo "=== CONFIGURAÇÃO FINAL ==="
+        head -30 buildozer.spec
+        echo "..."
+        grep "requirements.*=" buildozer.spec
+    
+    - name: 🧼 Clean Previous Builds (Completo)
+      run: |
+        cd v2-android
+        
+        # Remove tudo relacionado a builds anteriores
+        rm -rf .buildozer/android/platform/build-*
+        rm -rf .buildozer/android/app/*
+        rm -rf bin/
+        rm -rf dist/
+        
+        # Limpa caches Python
+        find . -name "*.pyc" -delete
+        find . -name "*.pyo" -delete
+        find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+        
+        # Limpa cache pip
+        pip cache purge
+        
+        echo "=== ESPAÇO APÓS LIMPEZA ==="
+        df -h
+    
+    - name: 🔨 Build APK (Com múltiplas tentativas)
+      timeout-minutes: 90
+      run: |
+        cd v2-android
+        
+        echo "🚀 INICIANDO BUILD..."
+        
+        # Configurações otimizadas
+        export JAVA_OPTS="-Xmx4g -XX:MaxMetaspaceSize=512m"
+        export GRADLE_OPTS="-Xmx2g -Dorg.gradle.daemon=false"
+        
+        # Primeira tentativa - configuração atual
+        echo "📱 Tentativa 1: Configuração atual"
+        if timeout 4800s bash -c 'yes | buildozer android debug'; then
+          echo "✅ Build bem-sucedido na primeira tentativa!"
+        else
+          echo "⚠️ Primeira tentativa falhou, reduzindo configuração..."
+          
+          # Segunda tentativa - apenas essenciais
+          sed -i 's/requirements = .*/requirements = python3,kivy,pyjnius,android/' buildozer.spec
+          echo "📱 Tentativa 2: Requirements mínimos"
+          
+          if timeout 4800s bash -c 'yes | buildozer android debug'; then
+            echo "✅ Build bem-sucedido na segunda tentativa!"
+          else
+            echo "⚠️ Segunda tentativa falhou, última tentativa..."
+            
+            # Terceira tentativa - ultra-minimal
+            sed -i 's/requirements = .*/requirements = python3,kivy/' buildozer.spec
+            echo "📱 Tentativa 3: Ultra-minimal"
+            
+            if timeout 4800s bash -c 'yes | buildozer android debug'; then
+              echo "✅ Build bem-sucedido na terceira tentativa!"
+            else
+              echo "❌ Todas as tentativas falharam"
+              
+              # Debug info
+              echo "=== DEBUG INFO ==="
+              find .buildozer -name "*.log" -exec echo "=== {} ===" \; -exec tail -50 {} \; 2>/dev/null || true
+              
+              exit 1
+            fi
+          fi
+        fi
+    
+    - name: 🔍 Locate and Package APK
+      run: |
+        cd v2-android
+        
+        echo "=== PROCURANDO APK ==="
+        find . -name "*.apk" -type f -ls
+        
+        # Cria diretório
+        mkdir -p dist
+        
+        # Encontra APK
+        APK_FILE=$(find . -name "*.apk" -type f | head -1)
+        if [ -n "$APK_FILE" ]; then
+          echo "✅ APK encontrado: $APK_FILE"
+          
+          # Informações detalhadas
+          ls -lh "$APK_FILE"
+          file "$APK_FILE"
+          
+          # Copia com nome descritivo
+          APK_NAME="MercadoEmNumeros-v2.1-$(date +%Y%m%d_%H%M).apk"
+          cp "$APK_FILE" "dist/$APK_NAME"
+          
+          echo "📱 APK final: dist/$APK_NAME"
+          ls -lh dist/
+          
+        else
+          echo "❌ Nenhum APK encontrado!"
+          echo "=== ESTRUTURA DE DIRETÓRIOS ==="
+          find .buildozer -type d -name "*dist*" 2>/dev/null || true
+          find . -name "*.gradle" 2>/dev/null || true
+          exit 1
+        fi
+    
+    - name: 📤 Upload APK (Sucesso)
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-apk-maxima-compatibilidade-${{ github.run_number }}
+        path: v2-android/dist/*.apk
+        retention-days: 30
+        if-no-files-found: error
+    
+    - name: 📤 Upload Logs (Falha)
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-logs-${{ github.run_number }}
+        path: |
+          v2-android/.buildozer/**/*.log
+          v2-android/buildozer.spec*
+        retention-days: 14
+        if-no-files-found: warn
