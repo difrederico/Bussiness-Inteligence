@@ -1,0 +1,165 @@
+name: 🚀 BUILD FORÇADO - Versão Limpa
+on:
+  workflow_dispatch:
+    inputs:
+      force_latest:
+        description: 'Forçar uso da versão mais recente'
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  build-forcado:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 90
+    
+    steps:
+    - name: 🔄 Checkout FORÇADO da versão mais recente
+      uses: actions/checkout@v4
+      with:
+        ref: main  # Força checkout da main
+        fetch-depth: 1
+        clean: true  # Limpa qualquer cache
+    
+    - name: 🧹 Verificação de Limpeza
+      run: |
+        echo "=== VERIFICANDO ARQUIVOS ATUAIS ==="
+        ls -la
+        
+        echo "=== ARQUIVOS PYTHON ==="
+        find . -name "*.py" -type f
+        
+        echo "=== VERIFICANDO SE ARQUIVOS PROBLEMÁTICOS FORAM REMOVIDOS ==="
+        if [ -f "main_backup.py" ]; then
+          echo "❌ ERRO: main_backup.py ainda existe!"
+          exit 1
+        fi
+        
+        if [ -f "test_master_qa.py" ]; then
+          echo "❌ ERRO: test_master_qa.py ainda existe!"
+          exit 1
+        fi
+        
+        if [ -f "main_novo.py" ]; then
+          echo "❌ ERRO: main_novo.py ainda existe!"
+          exit 1
+        fi
+        
+        echo "✅ VERIFICAÇÃO PASSOU - Arquivos problemáticos removidos"
+        
+        echo "=== VALIDANDO main.py ==="
+        if [ -f "main.py" ]; then
+          echo "✅ main.py existe"
+          head -20 main.py
+        else
+          echo "❌ main.py não encontrado!"
+          exit 1
+        fi
+    
+    - name: 🐍 Setup Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10.12'
+    
+    - name: ☕ Setup Java 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+    
+    - name: 📦 Install Dependencies
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq \
+          git zip unzip wget curl \
+          build-essential autoconf libtool \
+          pkg-config zlib1g-dev libffi-dev \
+          libssl-dev python3-dev openjdk-8-jdk
+    
+    - name: 🔧 Environment Setup
+      run: |
+        echo "JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64" >> $GITHUB_ENV
+        echo "BUILDOZER_AUTO_ACCEPT_ANDROID_SDK_LICENSE=1" >> $GITHUB_ENV
+    
+    - name: 🐍 Install Python Tools
+      run: |
+        python3 -m pip install --upgrade pip==23.3.1
+        pip install setuptools==68.2.2
+        pip install wheel==0.41.2
+        pip install cython==0.29.36
+        pip install buildozer==1.4.0
+        
+        echo "=== VERIFICAÇÃO FINAL ==="
+        buildozer --version
+        python3 --version
+    
+    - name: 📋 Verificar buildozer.spec
+      run: |
+        echo "=== BUILDOZER.SPEC ATUAL ==="
+        cat buildozer.spec
+        
+        echo "=== VERIFICANDO EXCLUSÕES ==="
+        grep -A 10 "source.exclude" buildozer.spec || echo "Sem exclusões definidas"
+    
+    - name: 🧼 Clean Everything
+      run: |
+        rm -rf .buildozer
+        rm -rf bin
+        rm -rf dist
+        find . -name "*.pyc" -delete
+        find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+    
+    - name: 🔨 Build APK LIMPO
+      timeout-minutes: 75
+      run: |
+        export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+        export GRADLE_OPTS="-Xmx1g -Dorg.gradle.daemon=false"
+        
+        echo "🚀 INICIANDO BUILD COM PROJETO LIMPO"
+        
+        timeout 4500s bash -c 'yes | buildozer android debug' || {
+          echo "❌ Build falhou, analisando logs..."
+          
+          echo "=== LOGS BUILDOZER ==="
+          find .buildozer -name "*.log" -exec echo "=== {} ===" \; -exec tail -100 {} \; 2>/dev/null || true
+          
+          echo "=== ARQUIVO QUE CAUSOU ERRO ==="
+          find .buildozer -name "*app*" -type d -exec find {} -name "*.py" \; 2>/dev/null | head -20
+          
+          exit 1
+        }
+    
+    - name: 🔍 Encontrar APK
+      run: |
+        echo "=== PROCURANDO APK ==="
+        find . -name "*.apk" -type f -ls
+        
+        mkdir -p dist
+        
+        APK_FILE=$(find . -name "*.apk" -type f | head -1)
+        if [ -n "$APK_FILE" ]; then
+          echo "✅ APK encontrado: $APK_FILE"
+          cp "$APK_FILE" "dist/LeitorQR-Limpo-$(date +%Y%m%d-%H%M).apk"
+          ls -lh dist/
+        else
+          echo "❌ APK não encontrado"
+          exit 1
+        fi
+    
+    - name: 📤 Upload APK de Sucesso
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: apk-projeto-limpo-${{ github.run_number }}
+        path: dist/*.apk
+        retention-days: 30
+    
+    - name: 📤 Upload Logs de Erro
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: logs-erro-${{ github.run_number }}
+        path: |
+          .buildozer/**/*.log
+          buildozer.spec
+        retention-days: 7
