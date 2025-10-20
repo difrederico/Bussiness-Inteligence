@@ -14,8 +14,17 @@ source.main = main.py
 # (list) Diretório de código fonte onde os arquivos Python são encontrados
 source.dir = .
 
-# (list) Padrões de arquivos para incluir
+# (list) Padrões de arquivos para incluir - RESTRITIVO
 source.include_exts = py,png,jpg,kv,atlas,json
+
+# (list) Padrões de arquivos para EXCLUIR
+source.exclude_exts = pyc,pyo
+
+# (list) Padrões de diretórios para excluir
+source.exclude_dirs = tests, bin, .git, .github, __pycache__, .buildozer
+
+# (list) Padrões de arquivos específicos para excluir
+source.exclude_patterns = test_*,*_test*,*_backup*,*_old*,*.log,*.tmp
 
 # (str) Versão da aplicação
 version = 2.1

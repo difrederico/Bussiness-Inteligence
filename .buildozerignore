@@ -1,0 +1,19 @@
+# Arquivos a serem ignorados pelo buildozer
+*.pyc
+__pycache__/
+.git/
+.gitignore
+.github/
+*.log
+*.tmp
+.buildozer/
+bin/
+dist/
+.vscode/
+*.bak
+*_backup*
+*_old*
+*_test*
+test_*
+README.md
+requirements.txt
