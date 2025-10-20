@@ -20,9 +20,11 @@ source.include_exts = py,png,jpg,kv,atlas,json
 # (str) Versão da aplicação
 version = 2.1
 
-# (list) Requisitos da aplicação (tentativa com visão computacional)
-# VERSÃO EXPERIMENTAL: Tentativa de incluir OpenCV e dependências
-requirements = python3,kivy==2.3.0,pillow,opencv,numpy,pyjnius,android
+# (list) Requisitos da aplicação - VERSÃO ESTÁVEL
+# ✅ Apenas dependências testadas e estáveis
+# ❌ Removidos opencv e numpy (causam problemas no p4a)
+# ✅ pyjnius mantido (essencial para APIs nativas Android)
+requirements = python3,kivy==2.3.0,pillow,pyjnius,android
 
 # (str) Requisitos garden (extensões Kivy)
 garden_requirements = 
@@ -44,10 +46,7 @@ osx.python_version = 3
 android.minapi = 21
 
 # (int) Android API que a aplicação vai compilar
-android.api = 30
-
-# (int) Android SDK para usar
-android.sdk = 30
+android.api = 33
 
 # (str) Versão do Android NDK para usar
 android.ndk = 25b

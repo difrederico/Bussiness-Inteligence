@@ -1,0 +1,210 @@
+name: Build Android APK - Ultra Estável
+on:
+  workflow_dispatch:
+    inputs:
+      use_stable_config:
+        description: 'Use configuração ultra-estável'
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04  # Versão específica e estável
+    timeout-minutes: 90    # Tempo generoso para evitar timeouts
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+    
+    - name: 🧹 Free Disk Space (Previne "No space left")
+      run: |
+        echo "=== Espaço inicial ==="
+        df -h
+        
+        # Remove ferramentas desnecessárias
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /usr/local/share/boost
+        sudo rm -rf /usr/local/lib/android/sdk/ndk
+        sudo rm -rf /usr/local/.ghcup
+        
+        echo "=== Espaço após limpeza ==="
+        df -h
+    
+    - name: 🐍 Setup Python 3.10 (Versão testada)
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10.12'  # Versão específica estável
+        cache: 'pip'
+    
+    - name: ☕ Setup Java 17 (LTS)
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        cache: 'gradle'
+    
+    - name: 📦 Install System Dependencies (Mínimas necessárias)
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq \
+          git zip unzip wget \
+          build-essential \
+          autoconf libtool \
+          pkg-config \
+          zlib1g-dev \
+          libffi-dev \
+          libssl-dev \
+          python3-dev
+        
+        # Verificações essenciais
+        python3 --version
+        java -version
+        which git
+    
+    - name: 🔧 Setup Environment Variables
+      run: |
+        echo "JAVA_HOME=/opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17*/x64" >> $GITHUB_ENV
+        echo "ANDROID_HOME=/opt/android-sdk" >> $GITHUB_ENV
+        echo "ANDROID_SDK_ROOT=/opt/android-sdk" >> $GITHUB_ENV
+        echo "PATH=$PATH:/opt/android-sdk/tools:/opt/android-sdk/platform-tools" >> $GITHUB_ENV
+    
+    - name: 🐍 Install Python Dependencies (Versões específicas)
+      run: |
+        python3 -m pip install --upgrade pip==24.0
+        pip install setuptools==69.5.1 wheel==0.43.0
+        pip install cython==3.0.10
+        pip install buildozer==1.5.0
+        
+        # Verificação das instalações
+        pip list | grep -E "(buildozer|cython)"
+        buildozer --version
+    
+    - name: 📋 Prepare Stable Configuration
+      run: |
+        cd v2-android
+        
+        # Backup da configuração original
+        cp buildozer.spec buildozer.spec.original
+        
+        # Use configuração ultra-estável se solicitado
+        if [ "${{ inputs.use_stable_config }}" = "true" ]; then
+          echo "🔧 Usando configuração ultra-estável..."
+          cp buildozer_stable.spec buildozer.spec
+        fi
+        
+        # Mostra configuração que será usada
+        echo "=== CONFIGURAÇÃO BUILDOZER ==="
+        head -30 buildozer.spec
+        echo "..."
+        echo "=== REQUIREMENTS ==="
+        grep "requirements.*=" buildozer.spec
+    
+    - name: 🧼 Clean Previous Builds
+      run: |
+        cd v2-android
+        rm -rf .buildozer/android/platform/build-*
+        rm -rf bin/
+        rm -rf dist/
+        
+        # Limpa cache pip também
+        pip cache purge
+    
+    - name: 🔨 Build APK (Com retry e timeout individual)
+      timeout-minutes: 75
+      run: |
+        cd v2-android
+        
+        # Configurações para buildozer
+        export BUILDOZER_AUTO_ACCEPT_ANDROID_SDK_LICENSE=1
+        export ANDROIDSDK=/opt/android-sdk
+        export ANDROIDNDK=/opt/android-ndk
+        export JAVA_OPTS="-Xmx4g"
+        
+        # Primeira tentativa (método padrão)
+        echo "🚀 Primeira tentativa de build..."
+        if timeout 3600s bash -c 'yes | buildozer android debug'; then
+          echo "✅ Build bem-sucedido na primeira tentativa!"
+        else
+          echo "⚠️ Primeira tentativa falhou, tentando com configuração reduzida..."
+          
+          # Segunda tentativa com configuração mínima
+          sed -i 's/requirements = .*/requirements = python3,kivy,pillow,pyjnius,android/' buildozer.spec
+          sed -i 's/android.archs = .*/android.archs = arm64-v8a/' buildozer.spec
+          
+          echo "🔄 Segunda tentativa com requirements mínimos..."
+          if timeout 3600s bash -c 'yes | buildozer android debug'; then
+            echo "✅ Build bem-sucedido na segunda tentativa!"
+          else
+            echo "❌ Build falhou em ambas tentativas"
+            exit 1
+          fi
+        fi
+    
+    - name: 🔍 Locate and Verify APK
+      run: |
+        cd v2-android
+        
+        echo "=== Procurando APK ==="
+        find . -name "*.apk" -type f
+        
+        # Cria diretório de distribuição
+        mkdir -p dist
+        
+        # Encontra e copia APK
+        APK_FILE=$(find . -name "*.apk" -type f | head -1)
+        if [ -n "$APK_FILE" ]; then
+          echo "✅ APK encontrado: $APK_FILE"
+          
+          # Copia com nome limpo
+          cp "$APK_FILE" dist/MercadoEmNumeros-v2.1-$(date +%Y%m%d).apk
+          
+          # Informações do APK
+          ls -lh dist/
+          file dist/*.apk
+          
+          echo "🎉 APK pronto para download!"
+        else
+          echo "❌ Nenhum APK encontrado!"
+          
+          # Debug: mostra estrutura de diretórios
+          echo "=== Estrutura de diretórios ==="
+          find .buildozer -type d -name "*dist*" || true
+          find . -name "build.gradle" || true
+          
+          exit 1
+        fi
+    
+    - name: 📤 Upload APK Success
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-apk-estavel-${{ github.run_number }}
+        path: v2-android/dist/*.apk
+        retention-days: 30
+        if-no-files-found: error
+    
+    - name: 📤 Upload Debug Logs (on failure)
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-logs-debug-${{ github.run_number }}
+        path: |
+          v2-android/.buildozer/**/*.log
+          v2-android/buildozer.spec
+        retention-days: 14
+        if-no-files-found: warn
+    
+    - name: 📊 Build Summary
+      if: always()
+      run: |
+        cd v2-android
+        echo "=== RESUMO DO BUILD ==="
+        echo "📁 Arquivos APK:"
+        find . -name "*.apk" -type f | wc -l
+        echo "💾 Espaço usado:"
+        du -sh .buildozer/ || echo "Diretório .buildozer não encontrado"
+        echo "🕐 Fim do build: $(date)"
